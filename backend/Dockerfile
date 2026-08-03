@@ -23,11 +23,15 @@ RUN gradle :backend:buildFatJar --no-daemon
 # Runtime stage — small JRE image, non-root user.
 # ---------------------------------------------------------------------------
 FROM eclipse-temurin:17-jre-jammy
-RUN useradd --system --create-home appuser
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/* \
+    && useradd --system --create-home appuser
 USER appuser
 WORKDIR /app
 
 COPY --from=build /home/gradle/src/backend/build/libs/*-all.jar app.jar
+# Migrations as plain files — Flyway classpath scanning inside fat jars is
+# unreliable, so FLYWAY_LOCATIONS points here (see docker-compose.yml).
+COPY backend/src/main/resources/db/migration /app/db/migration
 
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s \

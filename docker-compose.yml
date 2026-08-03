@@ -29,6 +29,7 @@ services:
       DATABASE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-recipeapp}
       DATABASE_USER: ${POSTGRES_USER:-recipeapp}
       DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-recipeapp}
+      FLYWAY_LOCATIONS: filesystem:/app/db/migration
       JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@recipeapp.dev}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin123!}

@@ -21,6 +21,7 @@ data class AppConfig(
                 user = config.property("app.database.user").getString(),
                 password = config.property("app.database.password").getString(),
                 maxPoolSize = config.property("app.database.maxPoolSize").getString().toInt(),
+                migrationsLocation = config.property("app.database.migrationsLocation").getString(),
             ),
             jwt = JwtConfig(
                 secret = config.property("app.jwt.secret").getString(),
@@ -42,7 +43,13 @@ data class AppConfig(
     }
 }
 
-data class DatabaseConfig(val url: String, val user: String, val password: String, val maxPoolSize: Int)
+data class DatabaseConfig(
+    val url: String,
+    val user: String,
+    val password: String,
+    val maxPoolSize: Int,
+    val migrationsLocation: String,
+)
 
 data class JwtConfig(
     val secret: String,

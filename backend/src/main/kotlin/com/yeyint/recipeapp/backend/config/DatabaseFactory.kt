@@ -20,7 +20,7 @@ object DatabaseFactory {
 
     fun init(config: DatabaseConfig): Database {
         val dataSource = hikari(config)
-        migrate(dataSource)
+        migrate(dataSource, config.migrationsLocation)
         return Database.connect(dataSource)
     }
 
@@ -36,14 +36,18 @@ object DatabaseFactory {
         },
     )
 
-    private fun migrate(dataSource: DataSource) {
-        log.info("Running database migrations…")
-        val result = Flyway.configure()
+    private fun migrate(dataSource: DataSource, location: String) {
+        log.info("Running database migrations from {}…", location)
+        val flyway = Flyway.configure()
             .dataSource(dataSource)
-            .locations("classpath:db/migration")
+            .locations(location)
+            .failOnMissingLocations(true)
             .load()
-            .migrate()
-        log.info("Applied {} migration(s)", result.migrationsExecuted)
+        val result = flyway.migrate()
+        log.info("Applied {} migration(s); schema version: {}", result.migrationsExecuted, result.targetSchemaVersion)
+        check(flyway.info().applied().isNotEmpty()) {
+            "No Flyway migrations were found at '$location' — the schema would be empty. Aborting startup."
+        }
     }
 }
 
