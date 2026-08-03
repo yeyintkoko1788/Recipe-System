@@ -1,0 +1,35 @@
+-- Offline cache of recipe summaries, keyed by the feed they belong to
+-- (EXPLORE_POPULAR, EXPLORE_NEW, EXPLORE_RECOMMENDED, SEARCH).
+-- The cache is read when the network is unavailable and refreshed on every
+-- successful fetch, giving the app basic offline support.
+
+CREATE TABLE recipe_summary (
+    id TEXT NOT NULL,
+    feed TEXT NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    cookingTimeMinutes INTEGER NOT NULL,
+    servings INTEGER NOT NULL,
+    difficulty TEXT NOT NULL,
+    coverImageUrl TEXT,
+    authorName TEXT NOT NULL,
+    viewCount INTEGER NOT NULL,
+    createdAt TEXT NOT NULL,
+    position INTEGER NOT NULL,
+    PRIMARY KEY (id, feed)
+);
+
+selectFeed:
+SELECT * FROM recipe_summary WHERE feed = ? ORDER BY position ASC;
+
+clearFeed:
+DELETE FROM recipe_summary WHERE feed = ?;
+
+insertSummary:
+INSERT OR REPLACE INTO recipe_summary(
+    id, feed, title, description, cookingTimeMinutes, servings, difficulty,
+    coverImageUrl, authorName, viewCount, createdAt, position
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+clearAll:
+DELETE FROM recipe_summary;

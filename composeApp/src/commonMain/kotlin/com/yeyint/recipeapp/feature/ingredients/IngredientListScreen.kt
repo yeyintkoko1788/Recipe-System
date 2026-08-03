@@ -1,0 +1,188 @@
+package com.yeyint.recipeapp.feature.ingredients
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.yeyint.recipeapp.shared.domain.model.Ingredient
+import com.yeyint.recipeapp.ui.components.AppButton
+import com.yeyint.recipeapp.ui.components.EmptyView
+import com.yeyint.recipeapp.ui.components.ErrorView
+import com.yeyint.recipeapp.ui.components.LoadingView
+import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun IngredientListScreen(
+    onBack: () -> Unit,
+    viewModel: IngredientListViewModel = koinViewModel(),
+) {
+    // Wire the pantry repository for "add to pantry" actions.
+    viewModel.pantryRepository = koinInject()
+
+    val uiState by viewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    var pantryTarget by remember { mutableStateOf<Ingredient?>(null) }
+    var showSubmitSheet by remember { mutableStateOf(false) }
+
+    LaunchedEffect(uiState.message) {
+        uiState.message?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.consumeMessage()
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        topBar = {
+            TopAppBar(
+                title = { Text("Ingredients") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    TextButton(onClick = { showSubmitSheet = true }) {
+                        Icon(Icons.Filled.Add, null)
+                        Text("Suggest")
+                    }
+                },
+            )
+        },
+    ) { padding ->
+        Column(Modifier.fillMaxSize().padding(padding)) {
+            OutlinedTextField(
+                value = uiState.query,
+                onValueChange = viewModel::onQueryChange,
+                placeholder = { Text("Search ingredients…") },
+                leadingIcon = { Icon(Icons.Filled.Search, null) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+            )
+
+            when {
+                uiState.isLoading -> LoadingView()
+                uiState.error != null -> ErrorView(uiState.error!!)
+                uiState.ingredients.isEmpty() -> EmptyView("No ingredients found", "Try suggesting a new one.")
+                else -> LazyColumn(contentPadding = PaddingValues(16.dp)) {
+                    items(uiState.ingredients, key = { it.id }) { ingredient ->
+                        Row(
+                            Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(ingredient.name, style = MaterialTheme.typography.titleMedium)
+                                Text(
+                                    "${ingredient.category.lowercase()} · ${ingredient.defaultUnit}",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            TextButton(onClick = { pantryTarget = ingredient }) { Text("Add to pantry") }
+                        }
+                    }
+                    if (uiState.hasMore) {
+                        item { LaunchedEffect(uiState.ingredients.size) { viewModel.loadMore() } }
+                    }
+                }
+            }
+        }
+    }
+
+    pantryTarget?.let { ingredient ->
+        var quantity by remember(ingredient.id) { mutableStateOf("") }
+        var unit by remember(ingredient.id) { mutableStateOf(ingredient.defaultUnit) }
+        ModalBottomSheet(onDismissRequest = { pantryTarget = null }) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("Add ${ingredient.name} to pantry", style = MaterialTheme.typography.titleLarge)
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = quantity, onValueChange = { quantity = it },
+                        label = { Text("Quantity") }, singleLine = true, modifier = Modifier.weight(1f),
+                    )
+                    OutlinedTextField(
+                        value = unit, onValueChange = { unit = it },
+                        label = { Text("Unit") }, singleLine = true, modifier = Modifier.weight(1f),
+                    )
+                }
+                AppButton(
+                    text = "Add",
+                    enabled = (quantity.toDoubleOrNull() ?: -1.0) >= 0.0,
+                    onClick = {
+                        viewModel.addToPantry(ingredient, quantity.toDoubleOrNull() ?: 0.0, unit)
+                        pantryTarget = null
+                    },
+                )
+                Spacer(Modifier.height(24.dp))
+            }
+        }
+    }
+
+    if (showSubmitSheet) {
+        var name by remember { mutableStateOf("") }
+        var category by remember { mutableStateOf("") }
+        var unit by remember { mutableStateOf("") }
+        ModalBottomSheet(onDismissRequest = { showSubmitSheet = false }) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("Suggest a new ingredient", style = MaterialTheme.typography.titleLarge)
+                Text(
+                    "Submissions are reviewed by an admin before they appear in the catalog.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name") },
+                    singleLine = true, modifier = Modifier.fillMaxWidth())
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(value = category, onValueChange = { category = it },
+                        label = { Text("Category") }, singleLine = true, modifier = Modifier.weight(1f))
+                    OutlinedTextField(value = unit, onValueChange = { unit = it },
+                        label = { Text("Default unit") }, singleLine = true, modifier = Modifier.weight(1f))
+                }
+                AppButton(
+                    text = "Submit",
+                    enabled = name.isNotBlank() && category.isNotBlank() && unit.isNotBlank(),
+                    onClick = {
+                        viewModel.submitIngredient(name, category, unit)
+                        showSubmitSheet = false
+                    },
+                )
+                Spacer(Modifier.height(24.dp))
+            }
+        }
+    }
+}

@@ -1,0 +1,28 @@
+-- V2: Seed a starter ingredient catalog (all APPROVED, owned by the system).
+INSERT INTO ingredients (name, category, default_unit) VALUES
+    ('Salt',           'SPICE',     'g'),
+    ('Sugar',          'BAKING',    'g'),
+    ('Black Pepper',   'SPICE',     'g'),
+    ('Rice',           'GRAIN',     'g'),
+    ('Soy Sauce',      'CONDIMENT', 'ml'),
+    ('Vegetable Oil',  'OIL',       'ml'),
+    ('Olive Oil',      'OIL',       'ml'),
+    ('Garlic',         'VEGETABLE', 'clove'),
+    ('Onion',          'VEGETABLE', 'pcs'),
+    ('Tomato',         'VEGETABLE', 'pcs'),
+    ('Potato',         'VEGETABLE', 'pcs'),
+    ('Carrot',         'VEGETABLE', 'pcs'),
+    ('Chicken Breast', 'MEAT',      'g'),
+    ('Ground Beef',    'MEAT',      'g'),
+    ('Pork Belly',     'MEAT',      'g'),
+    ('Egg',            'DAIRY',     'pcs'),
+    ('Milk',           'DAIRY',     'ml'),
+    ('Butter',         'DAIRY',     'g'),
+    ('All-Purpose Flour', 'BAKING', 'g'),
+    ('Fish Sauce',     'CONDIMENT', 'ml'),
+    ('Chili Powder',   'SPICE',     'g'),
+    ('Ginger',         'VEGETABLE', 'g'),
+    ('Spring Onion',   'VEGETABLE', 'pcs'),
+    ('Noodles',        'GRAIN',     'g'),
+    ('Coconut Milk',   'CONDIMENT', 'ml')
+ON CONFLICT DO NOTHING;

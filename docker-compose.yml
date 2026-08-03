@@ -1,0 +1,41 @@
+# Local development stack: PostgreSQL + backend API.
+#   cp .env.example .env   (edit secrets!)
+#   docker compose up --build
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-recipeapp}
+      POSTGRES_USER: ${POSTGRES_USER:-recipeapp}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-recipeapp}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-recipeapp} -d ${POSTGRES_DB:-recipeapp}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-recipeapp}
+      DATABASE_USER: ${POSTGRES_USER:-recipeapp}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-recipeapp}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@recipeapp.dev}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin123!}
+      CORS_ALLOWED_HOSTS: ${CORS_ALLOWED_HOSTS:-*}
+      PORT: "8080"
+    ports:
+      - "8080:8080"
+
+volumes:
+  pgdata:
