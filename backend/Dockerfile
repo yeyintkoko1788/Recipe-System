@@ -17,7 +17,11 @@ RUN printf '%s\n' \
     'include(":backend")' \
     > settings.gradle.kts
 
-RUN gradle :backend:buildFatJar --no-daemon
+# installDist instead of a fat jar: Flyway 10+ registers its internals via
+# META-INF/services, which fat-jar merging clobbers (symptom: valid V*__*.sql
+# files rejected as "not following the filename convention"). installDist
+# keeps every dependency jar intact.
+RUN gradle :backend:installDist --no-daemon
 
 # ---------------------------------------------------------------------------
 # Runtime stage — small JRE image, non-root user.
@@ -28,13 +32,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf 
 USER appuser
 WORKDIR /app
 
-COPY --from=build /home/gradle/src/backend/build/libs/*-all.jar app.jar
-# Migrations as plain files — Flyway classpath scanning inside fat jars is
-# unreliable, so FLYWAY_LOCATIONS points here (see docker-compose.yml).
+COPY --from=build /home/gradle/src/backend/build/install/backend /app
+# Migrations also shipped as plain files; FLYWAY_LOCATIONS points here
+# (see docker-compose.yml) so migration discovery never depends on jar layout.
 COPY backend/src/main/resources/db/migration /app/db/migration
 
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s \
     CMD curl -sf http://localhost:8080/healthz || exit 1
 
-ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-jar", "app.jar"]
+ENV JAVA_OPTS="-XX:MaxRAMPercentage=75"
+ENTRYPOINT ["/app/bin/backend"]
