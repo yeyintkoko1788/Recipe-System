@@ -8,8 +8,10 @@ FROM gradle:8.13-jdk17 AS build
 WORKDIR /home/gradle/src
 
 COPY gradle ./gradle
+COPY gradle.properties ./gradle.properties
 COPY backend ./backend
 RUN printf '%s\n' \
+    'pluginManagement { repositories { mavenCentral(); gradlePluginPortal() } }' \
     'rootProject.name = "RecipeApp"' \
     'dependencyResolutionManagement { repositories { mavenCentral() } }' \
     'include(":backend")' \

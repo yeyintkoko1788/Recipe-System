@@ -82,7 +82,7 @@ object ShoppingItemsTable : UUIDTable("shopping_items") {
     val name = varchar("name", 100)
     val quantity = decimal("quantity", 10, 2).nullable()
     val unit = varchar("unit", 20).nullable()
-    val source = varchar("source", 16)
+    val itemSource = varchar("source", 16)
     val isPurchased = bool("is_purchased").default(false)
     val createdAt = timestampWithTimeZone("created_at")
     val purchasedAt = timestampWithTimeZone("purchased_at").nullable()

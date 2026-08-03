@@ -43,7 +43,7 @@ class ExposedShoppingRepository : ShoppingRepository {
             it[ShoppingItemsTable.name] = name
             it[ShoppingItemsTable.quantity] = quantity
             it[ShoppingItemsTable.unit] = unit
-            it[ShoppingItemsTable.source] = source.name
+            it[ShoppingItemsTable.itemSource] = source.name
             it[createdAt] = OffsetDateTime.now(ZoneOffset.UTC)
         } get ShoppingItemsTable.id
         ShoppingItemsTable.selectAll().where { ShoppingItemsTable.id eq id }.single().toItem()
@@ -87,7 +87,7 @@ class ExposedShoppingRepository : ShoppingRepository {
         name = this[ShoppingItemsTable.name],
         quantity = this[ShoppingItemsTable.quantity],
         unit = this[ShoppingItemsTable.unit],
-        source = ShoppingSource.valueOf(this[ShoppingItemsTable.source]),
+        source = ShoppingSource.valueOf(this[ShoppingItemsTable.itemSource]),
         isPurchased = this[ShoppingItemsTable.isPurchased],
         createdAt = this[ShoppingItemsTable.createdAt].toInstant(),
         purchasedAt = this[ShoppingItemsTable.purchasedAt]?.toInstant(),
