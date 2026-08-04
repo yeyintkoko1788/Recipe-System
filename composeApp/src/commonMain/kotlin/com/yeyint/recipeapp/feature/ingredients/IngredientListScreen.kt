@@ -45,6 +45,9 @@ import com.yeyint.recipeapp.ui.components.AppButton
 import com.yeyint.recipeapp.ui.components.EmptyView
 import com.yeyint.recipeapp.ui.components.ErrorView
 import com.yeyint.recipeapp.ui.components.LoadingView
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -61,6 +64,13 @@ fun IngredientListScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var pantryTarget by remember { mutableStateOf<Ingredient?>(null) }
     var showSubmitSheet by remember { mutableStateOf(false) }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            viewModel.refresh()
+        }
+    }
 
     LaunchedEffect(uiState.message) {
         uiState.message?.let {
@@ -192,6 +202,7 @@ fun IngredientListScreen(
 
 private class FakeIngredientListContract(state: IngredientListUiState = IngredientListUiState()) : IngredientListContract {
     override val uiState: StateFlow<IngredientListUiState> = MutableStateFlow(state)
+    override fun refresh() = Unit
     override fun onQueryChange(query: String) = Unit
     override fun loadMore() = Unit
     override fun addToPantry(ingredient: Ingredient, quantity: Double, unit: String?) = Unit

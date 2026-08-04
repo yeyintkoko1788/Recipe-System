@@ -19,6 +19,7 @@ import kotlinx.coroutines.launch
 
 interface IngredientListContract {
     val uiState: StateFlow<IngredientListUiState>
+    fun refresh()
     fun onQueryChange(query: String)
     fun loadMore()
     fun addToPantry(ingredient: Ingredient, quantity: Double, unit: String?)
@@ -58,7 +59,25 @@ class IngredientListViewModel(
         viewModelScope.launch {
             queryFlow.debounce(300).distinctUntilChanged().collect { load(0) }
         }
-        load(0)
+    }
+
+    override fun refresh() {
+        if (_uiState.value.ingredients.isEmpty()) {
+            load(0)
+        } else {
+            // Background refresh: keep showing existing list, update silently.
+            viewModelScope.launch {
+                ingredientRepository.list(_uiState.value.query.takeIf { it.isNotBlank() }, page = 0)
+                    .onSuccess { result ->
+                        currentPage = 0
+                        _uiState.value = _uiState.value.copy(
+                            ingredients = result.items,
+                            hasMore = result.hasMore,
+                            error = null,
+                        )
+                    }
+            }
+        }
     }
 
     override fun onQueryChange(query: String) {

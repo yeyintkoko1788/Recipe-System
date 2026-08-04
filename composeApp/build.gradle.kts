@@ -1,4 +1,17 @@
+import java.util.Properties
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
+// Staging API URL resolution (first match wins):
+//   1. local.properties:  api.base.url=http://192.168.1.23:8080   (real device — your laptop's LAN IP)
+//   2. -PapiBaseUrl=... on the Gradle command line
+//   3. default http://10.0.2.2:8080                               (Android emulator -> host machine)
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+val stagingApiBaseUrl: String = localProperties.getProperty("api.base.url")
+    ?: (project.findProperty("apiBaseUrl") as String?)
+    ?: "http://10.0.2.2:8080"
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -91,8 +104,7 @@ android {
             dimension = "environment"
             applicationIdSuffix = ".staging"
             resValue("string", "app_name", "RecipeApp Staging")
-            // 10.0.2.2 reaches the host machine from the Android emulator.
-            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:8080\"")
+            buildConfigField("String", "API_BASE_URL", "\"$stagingApiBaseUrl\"")
         }
         create("production") {
             dimension = "environment"

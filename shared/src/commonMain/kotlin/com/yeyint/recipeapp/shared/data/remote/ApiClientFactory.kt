@@ -71,6 +71,7 @@ fun createHttpClient(
             level = LogLevel.ALL
             logger = Logger.DEFAULT
         }
+        install(InspektifyKtor)
     }
 
     install(Auth) {

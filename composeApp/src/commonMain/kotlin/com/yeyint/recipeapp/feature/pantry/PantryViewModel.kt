@@ -36,12 +36,8 @@ class PantryViewModel(
     private val _uiState = MutableStateFlow(PantryUiState())
     override val uiState: StateFlow<PantryUiState> = _uiState.asStateFlow()
 
-    init {
-        refresh()
-    }
-
     override fun refresh() {
-        _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+        _uiState.value = _uiState.value.copy(isLoading = _uiState.value.items.isEmpty(), error = null)
         viewModelScope.launch {
             pantryRepository.items()
                 .onSuccess { _uiState.value = PantryUiState(items = it, isLoading = false) }

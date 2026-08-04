@@ -40,12 +40,9 @@ class ShoppingListViewModel(
     private val _uiState = MutableStateFlow(ShoppingListUiState())
     override val uiState: StateFlow<ShoppingListUiState> = _uiState.asStateFlow()
 
-    init {
-        refresh()
-    }
-
     override fun refresh() {
-        _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+        val hasData = _uiState.value.pending.isNotEmpty() || _uiState.value.purchased.isNotEmpty()
+        _uiState.value = _uiState.value.copy(isLoading = !hasData, error = null)
         viewModelScope.launch {
             shoppingRepository.items(includePurchased = true)
                 .onSuccess { items ->

@@ -40,10 +40,6 @@ class ExploreViewModel(
 
     private var currentPage = 0
 
-    init {
-        refresh()
-    }
-
     override fun selectTab(tab: ExploreTab) {
         if (tab == _uiState.value.tab) return
         _uiState.value = ExploreUiState(tab = tab)
@@ -53,7 +49,10 @@ class ExploreViewModel(
 
     override fun refresh() {
         currentPage = 0
-        _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+        _uiState.value = _uiState.value.copy(
+            isLoading = _uiState.value.recipes.isEmpty(),
+            error = null,
+        )
         load(page = 0)
     }
 
