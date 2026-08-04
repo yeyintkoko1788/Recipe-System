@@ -22,8 +22,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.Surface
 import com.yeyint.recipeapp.shared.util.AppError
 import com.yeyint.recipeapp.shared.util.displayMessage
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /** Loading / empty / error building blocks (EmptyViewPod equivalents). */
 
@@ -90,6 +92,46 @@ fun ErrorView(
         if (onRetry != null) {
             Spacer(Modifier.height(8.dp))
             TextButton(onClick = onRetry) { Text("Try again") }
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun LoadingViewPreview() {
+    MaterialTheme {
+        Surface {
+            LoadingView()
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun EmptyViewPreview() {
+    MaterialTheme {
+        Surface {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                EmptyView(title = "No recipes yet")
+                EmptyView(
+                    title = "Nothing found",
+                    subtitle = "Try adjusting your search or filters.",
+                )
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun ErrorViewPreview() {
+    MaterialTheme {
+        Surface {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                ErrorView(error = AppError.Network, onRetry = {})
+                ErrorView(error = AppError.Timeout)
+                ErrorView(error = AppError.Unknown("Something went wrong"))
+            }
         }
     }
 }

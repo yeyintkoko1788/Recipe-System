@@ -21,10 +21,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.Surface
+import com.yeyint.recipeapp.shared.domain.model.Difficulty
+import com.yeyint.recipeapp.shared.domain.model.RecipeSummary
+import com.yeyint.recipeapp.shared.util.AppError
 import com.yeyint.recipeapp.ui.components.EmptyView
 import com.yeyint.recipeapp.ui.components.ErrorView
 import com.yeyint.recipeapp.ui.components.LoadingView
 import com.yeyint.recipeapp.ui.components.RecipeCard
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -80,6 +87,84 @@ fun ExploreScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+private class FakeExploreContract(state: ExploreUiState) : ExploreContract {
+    override val uiState: StateFlow<ExploreUiState> = MutableStateFlow(state)
+    override fun selectTab(tab: ExploreTab) = Unit
+    override fun loadMore() = Unit
+    override fun refresh() = Unit
+}
+
+private fun fakeRecipe(id: String, title: String) = RecipeSummary(
+    id = id, title = title,
+    description = "A delicious recipe you will love.",
+    cookingTimeMinutes = 30, servings = 2, difficulty = Difficulty.MEDIUM,
+    coverImageUrl = null, authorName = "Chef Preview", viewCount = 512, createdAt = "2025-01-01",
+)
+
+@Preview
+@Composable
+private fun ExploreScreenLoadingPreview() {
+    MaterialTheme {
+        Surface {
+            ExploreScreen(
+                onRecipeClick = {},
+                viewModel = FakeExploreContract(ExploreUiState(isLoading = true)),
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun ExploreScreenDataPreview() {
+    MaterialTheme {
+        Surface {
+            ExploreScreen(
+                onRecipeClick = {},
+                viewModel = FakeExploreContract(
+                    ExploreUiState(
+                        tab = ExploreTab.POPULAR,
+                        isLoading = false,
+                        recipes = listOf(
+                            fakeRecipe("1", "Spaghetti Carbonara"),
+                            fakeRecipe("2", "Avocado Toast"),
+                            fakeRecipe("3", "Beef Wellington"),
+                        ),
+                    ),
+                ),
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun ExploreScreenEmptyPreview() {
+    MaterialTheme {
+        Surface {
+            ExploreScreen(
+                onRecipeClick = {},
+                viewModel = FakeExploreContract(ExploreUiState(isLoading = false)),
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun ExploreScreenErrorPreview() {
+    MaterialTheme {
+        Surface {
+            ExploreScreen(
+                onRecipeClick = {},
+                viewModel = FakeExploreContract(
+                    ExploreUiState(isLoading = false, error = AppError.Network),
+                ),
+            )
         }
     }
 }

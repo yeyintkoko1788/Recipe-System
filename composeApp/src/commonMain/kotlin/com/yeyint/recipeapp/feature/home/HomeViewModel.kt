@@ -9,6 +9,7 @@ import com.yeyint.recipeapp.shared.domain.repository.ExploreRepository
 import com.yeyint.recipeapp.shared.util.AppError
 import com.yeyint.recipeapp.shared.util.AppResult
 import com.yeyint.recipeapp.shared.util.getOrNull
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -40,13 +41,15 @@ class HomeViewModel(
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
     override val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
-    init {
-        refresh()
-    }
+    private var refreshJob: Job? = null
 
     override fun refresh() {
-        viewModelScope.launch {
-            _uiState.value = HomeUiState.Loading
+        if (refreshJob?.isActive == true) return
+        refreshJob = viewModelScope.launch {
+            // Keep showing existing data while refreshing; only show spinner on first load or after an error.
+            if (_uiState.value !is HomeUiState.Data) {
+                _uiState.value = HomeUiState.Loading
+            }
 
             // Fetch the three feeds concurrently.
             val recommendedDeferred = async { exploreRepository.recommended(limit = 10) }

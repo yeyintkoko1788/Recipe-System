@@ -36,6 +36,9 @@ kotlin {
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.ktor.client.auth)
             implementation(libs.ktor.client.logging)
+            // In-app network inspector (shake device to open). Only installed
+            // when ApiConfig.enableNetworkLogs is true (debug/staging builds).
+            implementation(libs.inspektify.ktor3)
 
             implementation(libs.sqldelight.runtime)
             implementation(libs.sqldelight.coroutines)

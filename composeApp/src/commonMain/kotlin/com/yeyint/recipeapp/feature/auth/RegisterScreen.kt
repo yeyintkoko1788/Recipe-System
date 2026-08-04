@@ -20,11 +20,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.Surface
 import com.yeyint.recipeapp.shared.util.AppError
 import com.yeyint.recipeapp.shared.util.displayMessage
 import com.yeyint.recipeapp.ui.components.AppButton
 import com.yeyint.recipeapp.ui.components.AppTextField
 import com.yeyint.recipeapp.ui.components.PasswordTextField
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -94,5 +98,72 @@ fun RegisterScreen(
         )
         Spacer(Modifier.height(12.dp))
         TextButton(onClick = onBackToLogin) { Text("Already have an account? Log in") }
+    }
+}
+
+private class FakeRegisterContract(state: RegisterUiState = RegisterUiState.Idle) : RegisterContract {
+    override val uiState: StateFlow<RegisterUiState> = MutableStateFlow(state)
+    override fun register(name: String, email: String, password: String, confirmPassword: String) = Unit
+    override fun consumeError() = Unit
+}
+
+@Preview
+@Composable
+private fun RegisterScreenIdlePreview() {
+    MaterialTheme {
+        Surface {
+            RegisterScreen(onBackToLogin = {}, viewModel = FakeRegisterContract())
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun RegisterScreenLoadingPreview() {
+    MaterialTheme {
+        Surface {
+            RegisterScreen(
+                onBackToLogin = {},
+                viewModel = FakeRegisterContract(RegisterUiState.Loading),
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun RegisterScreenFieldErrorsPreview() {
+    MaterialTheme {
+        Surface {
+            RegisterScreen(
+                onBackToLogin = {},
+                viewModel = FakeRegisterContract(
+                    RegisterUiState.Error(
+                        AppError.Validation(
+                            message = "Please fix the errors below",
+                            fields = mapOf(
+                                "name" to "Name must be at least 2 characters",
+                                "email" to "Email is required",
+                                "password" to "Password must be at least 8 characters",
+                                "confirmPassword" to "Passwords do not match",
+                            ),
+                        ),
+                    ),
+                ),
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun RegisterScreenNetworkErrorPreview() {
+    MaterialTheme {
+        Surface {
+            RegisterScreen(
+                onBackToLogin = {},
+                viewModel = FakeRegisterContract(RegisterUiState.Error(AppError.Network)),
+            )
+        }
     }
 }

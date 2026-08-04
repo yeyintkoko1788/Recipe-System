@@ -37,12 +37,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.Surface
 import com.yeyint.recipeapp.shared.domain.model.Difficulty
 import com.yeyint.recipeapp.shared.domain.model.Ingredient
+import com.yeyint.recipeapp.shared.domain.model.RecipeDraft
+import com.yeyint.recipeapp.shared.util.AppError
 import com.yeyint.recipeapp.shared.util.displayMessage
 import com.yeyint.recipeapp.ui.components.AppButton
 import com.yeyint.recipeapp.ui.components.AppTextField
 import com.yeyint.recipeapp.ui.components.LoadingView
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 
 /** Create/edit recipe form with an ingredient-picker bottom sheet. */
@@ -261,6 +267,102 @@ private fun IngredientPickerSheet(
                 TextButton(onClick = { selected = null }) { Text("Back to search") }
             }
             Spacer(Modifier.height(24.dp))
+        }
+    }
+}
+
+private class FakeRecipeEditorContract(state: RecipeEditorUiState = RecipeEditorUiState()) : RecipeEditorContract {
+    override val uiState: StateFlow<RecipeEditorUiState> = MutableStateFlow(state)
+    override fun start(recipeId: String?) = Unit
+    override fun setTitle(value: String) = Unit
+    override fun setDescription(value: String) = Unit
+    override fun setCookingTime(value: String) = Unit
+    override fun setServings(value: String) = Unit
+    override fun setDifficulty(value: Difficulty) = Unit
+    override fun setCoverImageUrl(value: String) = Unit
+    override fun searchIngredients(query: String) = Unit
+    override fun addIngredient(ingredient: Ingredient, quantity: Double, unit: String) = Unit
+    override fun removeIngredient(ingredientId: String) = Unit
+    override fun addStep() = Unit
+    override fun updateStep(index: Int, value: String) = Unit
+    override fun removeStep(index: Int) = Unit
+    override fun save() = Unit
+}
+
+@Preview
+@Composable
+private fun RecipeEditorNewPreview() {
+    MaterialTheme {
+        Surface {
+            RecipeEditorScreen(recipeId = null, onDone = {}, viewModel = FakeRecipeEditorContract())
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun RecipeEditorEditModePreview() {
+    MaterialTheme {
+        Surface {
+            RecipeEditorScreen(
+                recipeId = "1", onDone = {},
+                viewModel = FakeRecipeEditorContract(
+                    RecipeEditorUiState(
+                        isEditMode = true,
+                        title = "Spaghetti Carbonara",
+                        description = "A classic Roman pasta dish.",
+                        cookingTime = "25",
+                        servings = "2",
+                        difficulty = Difficulty.MEDIUM,
+                        steps = listOf("Boil pasta.", "Fry guanciale.", "Mix eggs and toss."),
+                        ingredients = listOf(
+                            RecipeDraft.DraftIngredient("i1", "Spaghetti", 200.0, "g"),
+                            RecipeDraft.DraftIngredient("i2", "Guanciale", 100.0, "g"),
+                        ),
+                    ),
+                ),
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun RecipeEditorFieldErrorsPreview() {
+    MaterialTheme {
+        Surface {
+            RecipeEditorScreen(
+                recipeId = null, onDone = {},
+                viewModel = FakeRecipeEditorContract(
+                    RecipeEditorUiState(
+                        fieldErrors = mapOf(
+                            "title" to "Title must be at least 3 characters",
+                            "cookingTime" to "Enter the cooking time",
+                            "ingredients" to "Add at least one ingredient",
+                        ),
+                    ),
+                ),
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun RecipeEditorSavingPreview() {
+    MaterialTheme {
+        Surface {
+            RecipeEditorScreen(
+                recipeId = null, onDone = {},
+                viewModel = FakeRecipeEditorContract(
+                    RecipeEditorUiState(
+                        title = "Spaghetti Carbonara",
+                        cookingTime = "25",
+                        servings = "2",
+                        isSaving = true,
+                    ),
+                ),
+            )
         }
     }
 }

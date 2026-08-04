@@ -13,15 +13,19 @@ import io.ktor.client.plugins.auth.providers.BearerTokens
 import io.ktor.client.plugins.auth.providers.bearer
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.plugins.logging.DEFAULT
 import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import io.ktor.http.encodedPath
 import io.ktor.http.takeFrom
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+import sp.bvantur.inspektify.ktor.InspektifyKtor
 
 /** Base configuration injected at app start (per flavor / build config). */
 data class ApiConfig(
@@ -63,7 +67,10 @@ fun createHttpClient(
     }
 
     if (config.enableNetworkLogs) {
-        install(Logging) { level = LogLevel.INFO }
+        install(Logging) {
+            level = LogLevel.ALL
+            logger = Logger.DEFAULT
+        }
     }
 
     install(Auth) {

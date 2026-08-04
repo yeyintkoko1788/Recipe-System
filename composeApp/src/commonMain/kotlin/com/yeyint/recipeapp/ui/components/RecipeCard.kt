@@ -29,6 +29,7 @@ import androidx.compose.ui.layout.ContentScale
 import com.yeyint.recipeapp.shared.domain.model.Difficulty
 import com.yeyint.recipeapp.shared.domain.model.RecipeSummary
 import com.yeyint.recipeapp.theme.AppColors
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun DifficultyBadge(difficulty: Difficulty, modifier: Modifier = Modifier) {
@@ -147,5 +148,79 @@ fun SectionHeader(title: String, modifier: Modifier = Modifier, action: (@Compos
     ) {
         Text(title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
         action?.invoke()
+    }
+}
+
+private val previewRecipe = RecipeSummary(
+    id = "1",
+    title = "Spaghetti Carbonara",
+    description = "A classic Roman pasta dish made with eggs, cheese, pancetta, and pepper.",
+    cookingTimeMinutes = 25,
+    servings = 2,
+    difficulty = Difficulty.MEDIUM,
+    coverImageUrl = null,
+    authorName = "Chef Mario",
+    viewCount = 1_240,
+    createdAt = "2025-01-01",
+)
+
+@Preview
+@Composable
+private fun DifficultyBadgePreview() {
+    MaterialTheme {
+        Surface {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                DifficultyBadge(Difficulty.EASY)
+                DifficultyBadge(Difficulty.MEDIUM)
+                DifficultyBadge(Difficulty.HARD)
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun RecipeCardPreview() {
+    MaterialTheme {
+        Surface {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                RecipeCard(recipe = previewRecipe, onClick = {})
+                RecipeCard(
+                    recipe = previewRecipe.copy(
+                        title = "Easy Scrambled Eggs",
+                        description = "",
+                        difficulty = Difficulty.EASY,
+                        cookingTimeMinutes = 5,
+                        viewCount = 300,
+                    ),
+                    onClick = {},
+                )
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun SectionHeaderPreview() {
+    MaterialTheme {
+        Surface {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                SectionHeader(title = "Popular Recipes")
+                SectionHeader(
+                    title = "Recent",
+                    action = { Text("See all", style = MaterialTheme.typography.labelLarge) },
+                )
+            }
+        }
     }
 }

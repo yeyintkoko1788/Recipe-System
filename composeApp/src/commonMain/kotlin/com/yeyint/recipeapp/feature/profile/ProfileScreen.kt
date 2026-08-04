@@ -25,12 +25,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.yeyint.recipeapp.shared.domain.model.Difficulty
+import com.yeyint.recipeapp.shared.domain.model.RecipeSummary
+import com.yeyint.recipeapp.shared.domain.model.User
 import com.yeyint.recipeapp.shared.domain.model.UserRole
+import com.yeyint.recipeapp.shared.util.AppError
 import com.yeyint.recipeapp.ui.components.EmptyView
 import com.yeyint.recipeapp.ui.components.ErrorView
 import com.yeyint.recipeapp.ui.components.LoadingView
 import com.yeyint.recipeapp.ui.components.RecipeCard
 import com.yeyint.recipeapp.ui.components.SectionHeader
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -92,6 +99,87 @@ fun ProfileScreen(
             else -> items(uiState.myRecipes, key = { it.id }) { recipe ->
                 RecipeCard(recipe, onClick = { onMyRecipeClick(recipe.id) })
             }
+        }
+    }
+}
+
+private class FakeProfileContract(state: ProfileUiState) : ProfileContract {
+    override val uiState: StateFlow<ProfileUiState> = MutableStateFlow(state)
+    override fun refresh() = Unit
+    override fun logout() = Unit
+}
+
+private val previewUser = User("u1", "Ye Yint", "ye@example.com", UserRole.USER)
+private val previewAdminUser = User("u2", "Admin User", "admin@example.com", UserRole.ADMIN)
+
+private fun fakeRecipe(id: String, title: String) = RecipeSummary(
+    id = id, title = title,
+    description = "A delicious recipe.",
+    cookingTimeMinutes = 20, servings = 2, difficulty = Difficulty.EASY,
+    coverImageUrl = null, authorName = "Ye Yint", viewCount = 100, createdAt = "2025-01-01",
+)
+
+@Preview
+@Composable
+private fun ProfileScreenLoadingPreview() {
+    MaterialTheme {
+        Surface {
+            ProfileScreen(
+                onMyRecipeClick = {}, onSettingsClick = {},
+                viewModel = FakeProfileContract(ProfileUiState(user = previewUser, isLoadingRecipes = true)),
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun ProfileScreenDataPreview() {
+    MaterialTheme {
+        Surface {
+            ProfileScreen(
+                onMyRecipeClick = {}, onSettingsClick = {},
+                viewModel = FakeProfileContract(
+                    ProfileUiState(
+                        user = previewUser,
+                        isLoadingRecipes = false,
+                        myRecipes = listOf(
+                            fakeRecipe("1", "Spaghetti Carbonara"),
+                            fakeRecipe("2", "Avocado Toast"),
+                        ),
+                    ),
+                ),
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun ProfileScreenAdminPreview() {
+    MaterialTheme {
+        Surface {
+            ProfileScreen(
+                onMyRecipeClick = {}, onSettingsClick = {},
+                viewModel = FakeProfileContract(
+                    ProfileUiState(user = previewAdminUser, isLoadingRecipes = false),
+                ),
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun ProfileScreenErrorPreview() {
+    MaterialTheme {
+        Surface {
+            ProfileScreen(
+                onMyRecipeClick = {}, onSettingsClick = {},
+                viewModel = FakeProfileContract(
+                    ProfileUiState(user = previewUser, isLoadingRecipes = false, recipesError = AppError.Network),
+                ),
+            )
         }
     }
 }

@@ -25,6 +25,10 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 import com.yeyint.recipeapp.feature.explore.ExploreScreen
 import com.yeyint.recipeapp.feature.home.HomeScreen
 import com.yeyint.recipeapp.feature.ingredients.IngredientListScreen
+import com.yeyint.recipeapp.feature.ingredients.IngredientListViewModel
+import com.yeyint.recipeapp.shared.domain.repository.PantryRepository
+import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 import com.yeyint.recipeapp.feature.pantry.PantryScreen
 import com.yeyint.recipeapp.feature.profile.ProfileScreen
 import com.yeyint.recipeapp.feature.recipedetail.RecipeDetailScreen
@@ -106,7 +110,9 @@ fun MainScaffold(navController: NavHostController = rememberNavController()) {
                 )
             }
             composable<Route.Ingredients> {
-                IngredientListScreen(onBack = { navController.popBackStack() })
+                val vm = koinViewModel<IngredientListViewModel>()
+                vm.pantryRepository = koinInject<PantryRepository>()
+                IngredientListScreen(onBack = { navController.popBackStack() }, viewModel = vm)
             }
             composable<Route.Settings> {
                 SettingsScreen(onBack = { navController.popBackStack() })

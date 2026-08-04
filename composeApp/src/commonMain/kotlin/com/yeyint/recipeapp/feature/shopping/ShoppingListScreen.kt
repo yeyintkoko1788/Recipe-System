@@ -39,12 +39,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.Surface
 import com.yeyint.recipeapp.shared.domain.model.ShoppingItem
+import com.yeyint.recipeapp.shared.domain.model.ShoppingSource
+import com.yeyint.recipeapp.shared.util.AppError
 import com.yeyint.recipeapp.ui.components.AppButton
 import com.yeyint.recipeapp.ui.components.EmptyView
 import com.yeyint.recipeapp.ui.components.ErrorView
 import com.yeyint.recipeapp.ui.components.LoadingView
 import com.yeyint.recipeapp.ui.components.SectionHeader
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -150,6 +156,76 @@ fun ShoppingListScreen(
     }
 }
 
+private class FakeShoppingListContract(state: ShoppingListUiState) : ShoppingListContract {
+    override val uiState: StateFlow<ShoppingListUiState> = MutableStateFlow(state)
+    override fun refresh() = Unit
+    override fun addManual(name: String, quantity: Double?, unit: String?) = Unit
+    override fun generateFromPantry() = Unit
+    override fun purchase(itemId: String) = Unit
+    override fun remove(itemId: String) = Unit
+    override fun clearPurchased() = Unit
+    override fun consumeMessage() = Unit
+}
+
+private fun fakeShoppingItem(id: String, name: String, purchased: Boolean = false, source: ShoppingSource = ShoppingSource.MANUAL) =
+    ShoppingItem(id, null, name, null, null, source, purchased)
+
+private val previewPending = listOf(
+    fakeShoppingItem("s1", "Milk"),
+    ShoppingItem("s2", "i1", "Eggs", 12.0, "pcs", ShoppingSource.PANTRY, false),
+    fakeShoppingItem("s3", "Bread"),
+)
+private val previewPurchased = listOf(
+    fakeShoppingItem("s4", "Coffee", purchased = true),
+    fakeShoppingItem("s5", "Butter", purchased = true),
+)
+
+@Preview
+@Composable
+private fun ShoppingListLoadingPreview() {
+    MaterialTheme {
+        Surface {
+            ShoppingListScreen(viewModel = FakeShoppingListContract(ShoppingListUiState(isLoading = true)))
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun ShoppingListDataPreview() {
+    MaterialTheme {
+        Surface {
+            ShoppingListScreen(
+                viewModel = FakeShoppingListContract(
+                    ShoppingListUiState(isLoading = false, pending = previewPending, purchased = previewPurchased),
+                ),
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun ShoppingListEmptyPreview() {
+    MaterialTheme {
+        Surface {
+            ShoppingListScreen(viewModel = FakeShoppingListContract(ShoppingListUiState(isLoading = false)))
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun ShoppingListErrorPreview() {
+    MaterialTheme {
+        Surface {
+            ShoppingListScreen(
+                viewModel = FakeShoppingListContract(ShoppingListUiState(isLoading = false, error = AppError.Network)),
+            )
+        }
+    }
+}
+
 @Composable
 private fun ShoppingRow(item: ShoppingItem, onToggle: () -> Unit, onRemove: () -> Unit) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -162,7 +238,7 @@ private fun ShoppingRow(item: ShoppingItem, onToggle: () -> Unit, onRemove: () -
             )
             val detail = listOfNotNull(
                 item.quantity?.toString()?.let { q -> "$q ${item.unit.orEmpty()}".trim() },
-                if (item.source == com.yeyint.recipeapp.shared.domain.model.ShoppingSource.PANTRY) "from pantry" else null,
+                if (item.source == ShoppingSource.PANTRY) "from pantry" else null,
             ).joinToString(" · ")
             if (detail.isNotBlank()) {
                 Text(detail, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)

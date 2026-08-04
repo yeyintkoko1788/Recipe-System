@@ -22,11 +22,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.Surface
 import com.yeyint.recipeapp.shared.util.AppError
 import com.yeyint.recipeapp.shared.util.displayMessage
 import com.yeyint.recipeapp.ui.components.AppButton
 import com.yeyint.recipeapp.ui.components.AppTextField
 import com.yeyint.recipeapp.ui.components.PasswordTextField
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
@@ -94,6 +98,45 @@ fun LoginScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             TextButton(onClick = onRegisterClick) { Text("Create one") }
+        }
+    }
+}
+
+private class FakeLoginContract(state: LoginUiState = LoginUiState.Idle) : LoginContract {
+    override val uiState: StateFlow<LoginUiState> = MutableStateFlow(state)
+    override fun login(email: String, password: String) = Unit
+    override fun consumeError() = Unit
+}
+
+@Preview
+@Composable
+private fun LoginScreenIdlePreview() {
+    MaterialTheme {
+        Surface {
+            LoginScreen(onRegisterClick = {}, viewModel = FakeLoginContract())
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun LoginScreenLoadingPreview() {
+    MaterialTheme {
+        Surface {
+            LoginScreen(onRegisterClick = {}, viewModel = FakeLoginContract(LoginUiState.Loading))
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun LoginScreenErrorPreview() {
+    MaterialTheme {
+        Surface {
+            LoginScreen(
+                onRegisterClick = {},
+                viewModel = FakeLoginContract(LoginUiState.Error(AppError.Validation("Invalid email or password"))),
+            )
         }
     }
 }

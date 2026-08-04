@@ -38,13 +38,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.Surface
+import com.yeyint.recipeapp.shared.domain.model.Ingredient
+import com.yeyint.recipeapp.shared.domain.model.IngredientStatus
 import com.yeyint.recipeapp.shared.domain.model.PantryItem
+import com.yeyint.recipeapp.shared.util.AppError
 import com.yeyint.recipeapp.shared.util.displayMessage
 import com.yeyint.recipeapp.theme.AppColors
 import com.yeyint.recipeapp.ui.components.AppButton
 import com.yeyint.recipeapp.ui.components.EmptyView
 import com.yeyint.recipeapp.ui.components.ErrorView
 import com.yeyint.recipeapp.ui.components.LoadingView
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -124,6 +131,75 @@ fun PantryScreen(
                 )
                 Spacer(Modifier.height(24.dp))
             }
+        }
+    }
+}
+
+private class FakePantryContract(state: PantryUiState) : PantryContract {
+    override val uiState: StateFlow<PantryUiState> = MutableStateFlow(state)
+    override fun refresh() = Unit
+    override fun markOutOfStock(itemId: String) = Unit
+    override fun restock(itemId: String, quantity: Double) = Unit
+    override fun updateQuantity(itemId: String, quantity: Double) = Unit
+    override fun remove(itemId: String) = Unit
+    override fun consumeError() = Unit
+}
+
+private fun fakeIngredient(id: String, name: String) =
+    Ingredient(id, name, "Produce", "kg", null, IngredientStatus.APPROVED)
+
+private val previewPantryItems = listOf(
+    PantryItem("p1", fakeIngredient("i1", "Tomatoes"), 2.0, "kg", false),
+    PantryItem("p2", fakeIngredient("i2", "Flour"), 0.0, "kg", true),
+    PantryItem("p3", fakeIngredient("i3", "Olive Oil"), 0.5, "L", false),
+)
+
+@Preview
+@Composable
+private fun PantryScreenLoadingPreview() {
+    MaterialTheme {
+        Surface {
+            PantryScreen(onBrowseIngredients = {},
+                viewModel = FakePantryContract(PantryUiState(isLoading = true)))
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun PantryScreenDataPreview() {
+    MaterialTheme {
+        Surface {
+            PantryScreen(
+                onBrowseIngredients = {},
+                viewModel = FakePantryContract(PantryUiState(items = previewPantryItems, isLoading = false)),
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun PantryScreenEmptyPreview() {
+    MaterialTheme {
+        Surface {
+            PantryScreen(
+                onBrowseIngredients = {},
+                viewModel = FakePantryContract(PantryUiState(isLoading = false)),
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun PantryScreenErrorPreview() {
+    MaterialTheme {
+        Surface {
+            PantryScreen(
+                onBrowseIngredients = {},
+                viewModel = FakePantryContract(PantryUiState(isLoading = false, error = AppError.Network)),
+            )
         }
     }
 }

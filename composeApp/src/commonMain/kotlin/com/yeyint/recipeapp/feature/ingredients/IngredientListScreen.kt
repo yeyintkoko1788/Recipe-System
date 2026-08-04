@@ -37,22 +37,25 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.Surface
 import com.yeyint.recipeapp.shared.domain.model.Ingredient
+import com.yeyint.recipeapp.shared.domain.model.IngredientStatus
+import com.yeyint.recipeapp.shared.util.AppError
 import com.yeyint.recipeapp.ui.components.AppButton
 import com.yeyint.recipeapp.ui.components.EmptyView
 import com.yeyint.recipeapp.ui.components.ErrorView
 import com.yeyint.recipeapp.ui.components.LoadingView
-import org.koin.compose.koinInject
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IngredientListScreen(
     onBack: () -> Unit,
-    viewModel: IngredientListViewModel = koinViewModel(),
+    viewModel: IngredientListContract = koinViewModel<IngredientListViewModel>(),
 ) {
-    // Wire the pantry repository for "add to pantry" actions.
-    viewModel.pantryRepository = koinInject()
 
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -183,6 +186,79 @@ fun IngredientListScreen(
                 )
                 Spacer(Modifier.height(24.dp))
             }
+        }
+    }
+}
+
+private class FakeIngredientListContract(state: IngredientListUiState = IngredientListUiState()) : IngredientListContract {
+    override val uiState: StateFlow<IngredientListUiState> = MutableStateFlow(state)
+    override fun onQueryChange(query: String) = Unit
+    override fun loadMore() = Unit
+    override fun addToPantry(ingredient: Ingredient, quantity: Double, unit: String?) = Unit
+    override fun submitIngredient(name: String, category: String, unit: String) = Unit
+    override fun consumeMessage() = Unit
+}
+
+private fun fakeIngredient(id: String, name: String, category: String = "Produce") =
+    Ingredient(id, name, category, "kg", null, IngredientStatus.APPROVED)
+
+@Preview
+@Composable
+private fun IngredientListLoadingPreview() {
+    MaterialTheme {
+        Surface {
+            IngredientListScreen(onBack = {}, viewModel = FakeIngredientListContract())
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun IngredientListDataPreview() {
+    MaterialTheme {
+        Surface {
+            IngredientListScreen(
+                onBack = {},
+                viewModel = FakeIngredientListContract(
+                    IngredientListUiState(
+                        isLoading = false,
+                        ingredients = listOf(
+                            fakeIngredient("i1", "Tomatoes"),
+                            fakeIngredient("i2", "Flour", "Grain"),
+                            fakeIngredient("i3", "Olive Oil", "Oil"),
+                            fakeIngredient("i4", "Eggs", "Dairy"),
+                        ),
+                    ),
+                ),
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun IngredientListEmptyPreview() {
+    MaterialTheme {
+        Surface {
+            IngredientListScreen(
+                onBack = {},
+                viewModel = FakeIngredientListContract(IngredientListUiState(isLoading = false)),
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun IngredientListErrorPreview() {
+    MaterialTheme {
+        Surface {
+            IngredientListScreen(
+                onBack = {},
+                viewModel = FakeIngredientListContract(
+                    IngredientListUiState(isLoading = false, error = AppError.Network),
+                ),
+            )
         }
     }
 }

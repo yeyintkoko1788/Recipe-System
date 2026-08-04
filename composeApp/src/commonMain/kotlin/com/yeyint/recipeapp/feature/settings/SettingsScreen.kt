@@ -21,6 +21,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.Surface
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 
 /** App settings: light/dark/system theme (persisted on device). */
@@ -49,6 +53,41 @@ fun SettingsScreen(
             ThemeOption("Follow system", selected = darkMode == null) { viewModel.setDarkMode(null) }
             ThemeOption("Light", selected = darkMode == false) { viewModel.setDarkMode(false) }
             ThemeOption("Dark", selected = darkMode == true) { viewModel.setDarkMode(true) }
+        }
+    }
+}
+
+private class FakeSettingsContract(darkModeValue: Boolean?) : SettingsContract {
+    override val darkMode: StateFlow<Boolean?> = MutableStateFlow(darkModeValue)
+    override fun setDarkMode(enabled: Boolean?) = Unit
+}
+
+@Preview
+@Composable
+private fun SettingsScreenSystemPreview() {
+    MaterialTheme {
+        Surface {
+            SettingsScreen(onBack = {}, viewModel = FakeSettingsContract(null))
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun SettingsScreenLightPreview() {
+    MaterialTheme {
+        Surface {
+            SettingsScreen(onBack = {}, viewModel = FakeSettingsContract(false))
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun SettingsScreenDarkPreview() {
+    MaterialTheme {
+        Surface {
+            SettingsScreen(onBack = {}, viewModel = FakeSettingsContract(true))
         }
     }
 }

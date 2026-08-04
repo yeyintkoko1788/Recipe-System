@@ -39,9 +39,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import androidx.compose.material3.Surface
+import com.yeyint.recipeapp.shared.domain.model.Difficulty
+import com.yeyint.recipeapp.shared.domain.model.RecipeDetail
+import com.yeyint.recipeapp.shared.domain.model.RecipeIngredientLine
+import com.yeyint.recipeapp.shared.util.AppError
 import com.yeyint.recipeapp.ui.components.DifficultyBadge
 import com.yeyint.recipeapp.ui.components.ErrorView
 import com.yeyint.recipeapp.ui.components.LoadingView
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -183,3 +191,88 @@ private fun InfoChip(icon: @Composable () -> Unit, text: String) {
 
 private fun Double.formatQuantity(): String =
     if (this == kotlin.math.floor(this)) toInt().toString() else toString()
+
+private class FakeRecipeDetailContract(state: RecipeDetailUiState) : RecipeDetailContract {
+    override val uiState: StateFlow<RecipeDetailUiState> = MutableStateFlow(state)
+    override fun load(recipeId: String) = Unit
+    override fun delete() = Unit
+}
+
+private val previewRecipeDetail = RecipeDetail(
+    id = "1",
+    title = "Spaghetti Carbonara",
+    description = "A classic Roman pasta dish made with eggs, guanciale, and Pecorino Romano.",
+    cookingTimeMinutes = 25,
+    servings = 2,
+    difficulty = Difficulty.MEDIUM,
+    coverImageUrl = null,
+    instructions = listOf(
+        "Boil salted water and cook spaghetti until al dente.",
+        "Fry guanciale in a pan until crispy.",
+        "Whisk eggs with Pecorino Romano and black pepper.",
+        "Toss hot pasta with guanciale, then off heat add egg mixture.",
+    ),
+    ingredients = listOf(
+        RecipeIngredientLine("i1", "Spaghetti", 200.0, "g", null),
+        RecipeIngredientLine("i2", "Guanciale", 100.0, "g", null),
+        RecipeIngredientLine("i3", "Eggs", 3.0, "pcs", "room temperature"),
+        RecipeIngredientLine("i4", "Pecorino Romano", 50.0, "g", "finely grated"),
+    ),
+    authorId = "u1",
+    authorName = "Chef Mario",
+    viewCount = 1240,
+)
+
+@Preview
+@Composable
+private fun RecipeDetailLoadingPreview() {
+    MaterialTheme {
+        Surface {
+            RecipeDetailScreen(recipeId = "1", onBack = {}, onEdit = {},
+                viewModel = FakeRecipeDetailContract(RecipeDetailUiState.Loading))
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun RecipeDetailDataPreview() {
+    MaterialTheme {
+        Surface {
+            RecipeDetailScreen(
+                recipeId = "1", onBack = {}, onEdit = {},
+                viewModel = FakeRecipeDetailContract(
+                    RecipeDetailUiState.Data(recipe = previewRecipeDetail, canModify = false),
+                ),
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun RecipeDetailEditablePreview() {
+    MaterialTheme {
+        Surface {
+            RecipeDetailScreen(
+                recipeId = "1", onBack = {}, onEdit = {},
+                viewModel = FakeRecipeDetailContract(
+                    RecipeDetailUiState.Data(recipe = previewRecipeDetail, canModify = true),
+                ),
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun RecipeDetailErrorPreview() {
+    MaterialTheme {
+        Surface {
+            RecipeDetailScreen(
+                recipeId = "1", onBack = {}, onEdit = {},
+                viewModel = FakeRecipeDetailContract(RecipeDetailUiState.Error(AppError.Network)),
+            )
+        }
+    }
+}

@@ -28,11 +28,18 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import com.yeyint.recipeapp.shared.domain.model.Difficulty
+import com.yeyint.recipeapp.shared.domain.model.RecipeSummary
+import com.yeyint.recipeapp.shared.util.AppError
 import com.yeyint.recipeapp.ui.components.EmptyView
 import com.yeyint.recipeapp.ui.components.ErrorView
 import com.yeyint.recipeapp.ui.components.LoadingView
 import com.yeyint.recipeapp.ui.components.RecipeCard
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -111,6 +118,92 @@ fun SearchScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+private class FakeSearchContract(state: SearchUiState = SearchUiState()) : SearchContract {
+    override val uiState: StateFlow<SearchUiState> = MutableStateFlow(state)
+    override fun onQueryChange(query: String) = Unit
+    override fun setDifficulty(difficulty: Difficulty?) = Unit
+    override fun setSort(sortBy: String) = Unit
+    override fun loadMore() = Unit
+}
+
+private fun fakeRecipe(id: String, title: String) = RecipeSummary(
+    id = id, title = title,
+    description = "A delicious recipe you will love.",
+    cookingTimeMinutes = 30, servings = 2, difficulty = Difficulty.EASY,
+    coverImageUrl = null, authorName = "Chef Preview", viewCount = 200, createdAt = "2025-01-01",
+)
+
+@Preview
+@Composable
+private fun SearchScreenIdlePreview() {
+    MaterialTheme {
+        Surface {
+            SearchScreen(onRecipeClick = {}, onBack = {}, viewModel = FakeSearchContract())
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun SearchScreenLoadingPreview() {
+    MaterialTheme {
+        Surface {
+            SearchScreen(
+                onRecipeClick = {}, onBack = {},
+                viewModel = FakeSearchContract(SearchUiState(query = "pasta", isLoading = true)),
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun SearchScreenResultsPreview() {
+    MaterialTheme {
+        Surface {
+            SearchScreen(
+                onRecipeClick = {}, onBack = {},
+                viewModel = FakeSearchContract(
+                    SearchUiState(
+                        query = "pasta",
+                        hasSearched = true,
+                        results = listOf(
+                            fakeRecipe("1", "Spaghetti Carbonara"),
+                            fakeRecipe("2", "Penne Arrabbiata"),
+                        ),
+                    ),
+                ),
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun SearchScreenNoResultsPreview() {
+    MaterialTheme {
+        Surface {
+            SearchScreen(
+                onRecipeClick = {}, onBack = {},
+                viewModel = FakeSearchContract(SearchUiState(query = "xyz", hasSearched = true)),
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun SearchScreenErrorPreview() {
+    MaterialTheme {
+        Surface {
+            SearchScreen(
+                onRecipeClick = {}, onBack = {},
+                viewModel = FakeSearchContract(SearchUiState(error = AppError.Network)),
+            )
         }
     }
 }

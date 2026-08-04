@@ -1,7 +1,10 @@
 package com.yeyint.recipeapp.ui.components
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -12,6 +15,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -25,6 +29,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /**
  * Reusable inputs — multiplatform ports of ComposeBase's DefaultButton /
@@ -109,4 +114,62 @@ fun PasswordTextField(
             }
         },
     )
+}
+
+@Preview
+@Composable
+private fun AppButtonPreview() {
+    MaterialTheme {
+        Surface {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                AppButton(text = "Sign In", onClick = {})
+                AppButton(text = "Loading…", onClick = {}, loading = true)
+                AppButton(text = "Disabled", onClick = {}, enabled = false)
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun AppTextFieldPreview() {
+    MaterialTheme {
+        Surface {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                AppTextField(value = "John Doe", onValueChange = {}, label = "Full name")
+                AppTextField(
+                    value = "bad@",
+                    onValueChange = {},
+                    label = "Email",
+                    errorMessage = "Invalid email address",
+                )
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun PasswordTextFieldPreview() {
+    MaterialTheme {
+        Surface {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                PasswordTextField(value = "secret123", onValueChange = {})
+                PasswordTextField(
+                    value = "short",
+                    onValueChange = {},
+                    errorMessage = "Password too short",
+                )
+            }
+        }
+    }
 }
