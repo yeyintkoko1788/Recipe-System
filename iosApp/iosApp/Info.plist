@@ -20,6 +20,11 @@
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<!-- Required by Compose Multiplatform: opts the app out of the 60fps cap
+	     so rendering can run at the display's full refresh rate (120Hz on Pro
+	     devices). Compose aborts at startup if this is missing. -->
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSAppTransportSecurity</key>
