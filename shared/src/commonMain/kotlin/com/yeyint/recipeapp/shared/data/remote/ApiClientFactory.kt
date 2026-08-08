@@ -70,7 +70,8 @@ fun createHttpClient(
             level = LogLevel.ALL
             logger = Logger.DEFAULT
         }
-        install(InspektifyKtor)
+        // In-app network inspector (Android: shake to open).
+        installNetworkInspector()
     }
 
     install(Auth) {
