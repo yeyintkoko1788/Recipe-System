@@ -1,3 +1,13 @@
+// Leave TEAM_ID empty to run on the SIMULATOR (no Apple account needed).
+// For a physical device, set it to your 10-character Team ID.
 TEAM_ID=
 BUNDLE_ID=com.yeyint.recipeapp.RecipeApp
 APP_NAME=RecipeApp
+
+// Simulator builds need no code signing. Without this, Xcode tries to create a
+// provisioning profile and fails ("no devices from which to generate a
+// provisioning profile") even though the simulator never requires one.
+// Device builds are unaffected and still use automatic signing.
+CODE_SIGNING_ALLOWED[sdk=iphonesimulator*]=NO
+CODE_SIGNING_REQUIRED[sdk=iphonesimulator*]=NO
+CODE_SIGN_IDENTITY[sdk=iphonesimulator*]=
