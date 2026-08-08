@@ -36,9 +36,6 @@ kotlin {
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.ktor.client.auth)
             implementation(libs.ktor.client.logging)
-            // In-app network inspector (shake device to open). Only installed
-            // when ApiConfig.enableNetworkLogs is true (debug/staging builds).
-            implementation(libs.inspektify.ktor3)
 
             implementation(libs.sqldelight.runtime)
             implementation(libs.sqldelight.coroutines)
@@ -46,6 +43,9 @@ kotlin {
         }
         androidMain.dependencies {
             implementation(libs.ktor.client.okhttp)
+            // In-app network inspector (shake to open). Android-only for now:
+            // the iOS klib fails to resolve under Kotlin 2.2.x.
+            implementation(libs.inspektify.ktor3)
             implementation(libs.sqldelight.android.driver)
         }
         iosMain.dependencies {

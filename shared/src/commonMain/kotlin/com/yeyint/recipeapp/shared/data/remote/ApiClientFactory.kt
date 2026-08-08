@@ -25,7 +25,6 @@ import io.ktor.http.encodedPath
 import io.ktor.http.takeFrom
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
-import sp.bvantur.inspektify.ktor.InspektifyKtor
 
 /** Base configuration injected at app start (per flavor / build config). */
 data class ApiConfig(
