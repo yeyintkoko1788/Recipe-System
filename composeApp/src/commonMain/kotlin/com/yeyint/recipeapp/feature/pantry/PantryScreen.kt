@@ -1,5 +1,6 @@
 package com.yeyint.recipeapp.feature.pantry
 
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -82,6 +83,10 @@ fun PantryScreen(
     }
 
     Scaffold(
+        // MainScaffold already applies the window insets and passes them
+        // to this screen; re-applying them here would double the top
+        // padding (very visible on iOS, where the safe area is ~59pt).
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             FloatingActionButton(onClick = onBrowseIngredients) {
