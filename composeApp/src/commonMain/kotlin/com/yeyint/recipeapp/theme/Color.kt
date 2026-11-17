@@ -8,16 +8,22 @@ import androidx.compose.ui.graphics.Color
  */
 object AppColors {
     // Brand
-    val BrandPrimary = Color(0xFF864DF9)
-    val BrandPrimaryDisabled = Color(0x66864DF9)
-    val BrandSurfaceTint = Color(0xFFF8F5FE)
+    val BrandPrimary = Color(0xFF0B7A43)
+    val BrandPrimaryDisabled = Color(0x660B7A43)
+    val BrandSurfaceTint = Color(0xFFE7F4EC)
+    /** Lighter green that keeps contrast on dark surfaces. */
+    val BrandPrimaryDark = Color(0xFF4CC38A)
+    val OnBrandPrimaryDark = Color(0xFF00391F)
 
     // Neutrals (light)
-    val NeutralText = Color(0xFF1C1C1C)
-    val NeutralTextLight = Color(0xFF8D8D8D)
-    val Surface = Color(0xFFF9F9F9)
-    val CardBackground = Color(0xFFF6F7F9)
-    val BorderLight = Color(0xFFDBDBDB)
+    val NeutralText = Color(0xFF111418)
+    val NeutralTextLight = Color(0xFF5B6470)
+    val Surface = Color(0xFFFFFFFF)
+    val CardBackground = Color(0xFFF3F4F6)
+    val BorderLight = Color(0xFFE5E7EB)
+    /** Floating bottom navigation pill. */
+    val NavPill = Color(0xFF111418)
+    val NavPillIcon = Color(0xFFC9CED6)
 
     // Neutrals (dark)
     val DarkBackground = Color(0xFF121212)

@@ -1,14 +1,26 @@
 package com.yeyint.recipeapp.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+
+private val AppShapes = Shapes(
+    extraSmall = RoundedCornerShape(8.dp),
+    small = RoundedCornerShape(12.dp),
+    medium = RoundedCornerShape(16.dp),
+    large = RoundedCornerShape(24.dp),
+    extraLarge = RoundedCornerShape(28.dp),
+)
 
 private val LightColors = lightColorScheme(
     primary = AppColors.BrandPrimary,
-    onPrimary = AppColors.DarkText,
+    onPrimary = Color.White,
     primaryContainer = AppColors.BrandSurfaceTint,
     onPrimaryContainer = AppColors.BrandPrimary,
     secondary = AppColors.Info,
@@ -23,10 +35,10 @@ private val LightColors = lightColorScheme(
 )
 
 private val DarkColors = darkColorScheme(
-    primary = AppColors.BrandPrimary,
-    onPrimary = AppColors.DarkText,
+    primary = AppColors.BrandPrimaryDark,
+    onPrimary = AppColors.OnBrandPrimaryDark,
     primaryContainer = AppColors.DarkCard,
-    onPrimaryContainer = AppColors.BrandPrimary,
+    onPrimaryContainer = AppColors.BrandPrimaryDark,
     secondary = AppColors.Info,
     background = AppColors.DarkBackground,
     onBackground = AppColors.DarkText,
@@ -51,6 +63,7 @@ fun RecipeAppTheme(
     MaterialTheme(
         colorScheme = if (darkTheme) DarkColors else LightColors,
         typography = AppTypography,
+        shapes = AppShapes,
         content = content,
     )
 }

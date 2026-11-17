@@ -1,6 +1,9 @@
 package com.yeyint.recipeapp.ui.components
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -8,12 +11,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Schedule
-import androidx.compose.material.icons.outlined.Visibility
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material.icons.outlined.Restaurant
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -21,11 +21,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.ui.layout.ContentScale
 import com.yeyint.recipeapp.shared.domain.model.Difficulty
 import com.yeyint.recipeapp.shared.domain.model.RecipeSummary
 import com.yeyint.recipeapp.theme.AppColors
@@ -34,7 +34,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @Composable
 fun DifficultyBadge(difficulty: Difficulty, modifier: Modifier = Modifier) {
     val (color, label) = when (difficulty) {
-        Difficulty.EASY -> AppColors.Success to "Easy"
+        Difficulty.EASY -> AppColors.SuccessText to "Easy"
         Difficulty.MEDIUM -> AppColors.Warning to "Medium"
         Difficulty.HARD -> AppColors.Error to "Hard"
     }
@@ -52,90 +52,130 @@ fun DifficultyBadge(difficulty: Difficulty, modifier: Modifier = Modifier) {
     }
 }
 
-/** Card used across Home, Explore and Search lists. */
+private fun Difficulty.label() = when (this) {
+    Difficulty.EASY -> "Easy"
+    Difficulty.MEDIUM -> "Medium"
+    Difficulty.HARD -> "Hard"
+}
+
+/**
+ * Card used across Home, Explore and Search lists: a large rounded image with
+ * a cook-time chip, and the text set directly on the page below it.
+ */
 @Composable
 fun RecipeCard(
     recipe: RecipeSummary,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Card(
-        onClick = onClick,
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.large)
+            .clickable(onClick = onClick),
     ) {
-        Column {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(16f / 10f)
+                .clip(MaterialTheme.shapes.large)
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+        ) {
             if (recipe.coverImageUrl != null) {
                 AsyncImage(
                     model = recipe.coverImageUrl,
                     contentDescription = recipe.title,
-                    modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
+                    modifier = Modifier.fillMaxWidth().aspectRatio(16f / 10f),
                     contentScale = ContentScale.Crop,
                 )
+            } else {
+                Icon(
+                    Icons.Outlined.Restaurant, null,
+                    modifier = Modifier.align(Alignment.Center).size(36.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
-            Column(Modifier.padding(14.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        recipe.title,
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f),
-                    )
-                    DifficultyBadge(recipe.difficulty)
-                }
-                if (recipe.description.isNotBlank()) {
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        recipe.description,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                Spacer(Modifier.height(8.dp))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Outlined.Schedule, null,
-                            modifier = Modifier.size(15.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Spacer(Modifier.width(3.dp))
-                        Text(
-                            "${recipe.cookingTimeMinutes} min",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Outlined.Visibility, null,
-                            modifier = Modifier.size(15.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Spacer(Modifier.width(3.dp))
-                        Text(
-                            "${recipe.viewCount}",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    Spacer(Modifier.weight(1f))
-                    Text(
-                        "by ${recipe.authorName}",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
+            Surface(
+                modifier = Modifier.align(Alignment.TopStart).padding(12.dp),
+                shape = MaterialTheme.shapes.small,
+                color = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.onSurface,
+            ) {
+                Text(
+                    "${recipe.cookingTimeMinutes} min",
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                )
             }
+        }
+        Column(Modifier.padding(horizontal = 4.dp, vertical = 10.dp)) {
+            Text(
+                recipe.title,
+                style = MaterialTheme.typography.titleLarge,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                "${recipe.difficulty.label()} · ${recipe.authorName} · ${recipe.viewCount} views",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+/** Compact row: square thumbnail on the left, title and meta on the right. */
+@Composable
+fun RecipeListRow(
+    recipe: RecipeSummary,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .clickable(onClick = onClick),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(80.dp)
+                .clip(MaterialTheme.shapes.medium)
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+        ) {
+            if (recipe.coverImageUrl != null) {
+                AsyncImage(
+                    model = recipe.coverImageUrl,
+                    contentDescription = recipe.title,
+                    modifier = Modifier.size(80.dp),
+                    contentScale = ContentScale.Crop,
+                )
+            } else {
+                Icon(
+                    Icons.Outlined.Restaurant, null,
+                    modifier = Modifier.align(Alignment.Center).size(28.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        Column(Modifier.weight(1f).padding(start = 14.dp)) {
+            Text(
+                recipe.title,
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                "${recipe.cookingTimeMinutes} min · ${recipe.difficulty.label()}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }

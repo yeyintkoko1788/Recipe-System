@@ -1,6 +1,15 @@
 package com.yeyint.recipeapp.navigation
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Home
@@ -8,12 +17,17 @@ import androidx.compose.material.icons.filled.Kitchen
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
+import com.yeyint.recipeapp.theme.AppColors
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -38,15 +52,60 @@ import com.yeyint.recipeapp.feature.settings.SettingsScreen
 import com.yeyint.recipeapp.feature.shopping.ShoppingListScreen
 import androidx.navigation.toRoute
 
-private data class BottomTab(val route: Route, val label: String, val icon: @Composable () -> Unit)
+private data class BottomTab(val route: Route, val label: String, val icon: ImageVector)
 
 private val bottomTabs = listOf(
-    BottomTab(Route.Home, "Home") { Icon(Icons.Filled.Home, null) },
-    BottomTab(Route.Explore, "Explore") { Icon(Icons.Filled.Explore, null) },
-    BottomTab(Route.Pantry, "Pantry") { Icon(Icons.Filled.Kitchen, null) },
-    BottomTab(Route.Shopping, "Shopping") { Icon(Icons.Filled.ShoppingCart, null) },
-    BottomTab(Route.Profile, "Profile") { Icon(Icons.Filled.Person, null) },
+    BottomTab(Route.Home, "Home", Icons.Filled.Home),
+    BottomTab(Route.Explore, "Explore", Icons.Filled.Explore),
+    BottomTab(Route.Pantry, "Pantry", Icons.Filled.Kitchen),
+    BottomTab(Route.Shopping, "Shopping", Icons.Filled.ShoppingCart),
+    BottomTab(Route.Profile, "Profile", Icons.Filled.Person),
 )
+
+/** Floating dark pill; the selected tab is a green circle. */
+@Composable
+private fun FloatingNavBar(
+    selectedRoute: (BottomTab) -> Boolean,
+    onSelect: (BottomTab) -> Unit,
+) {
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+    ) {
+        Surface(
+            modifier = Modifier.fillMaxWidth().height(64.dp),
+            shape = CircleShape,
+            color = AppColors.NavPill,
+        ) {
+            Row(
+                Modifier.padding(horizontal = 12.dp),
+                horizontalArrangement = Arrangement.SpaceAround,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                bottomTabs.forEach { tab ->
+                    val selected = selectedRoute(tab)
+                    IconButton(
+                        onClick = { onSelect(tab) },
+                        modifier = Modifier
+                            .size(48.dp)
+                            .background(
+                                if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                CircleShape,
+                            ),
+                    ) {
+                        Icon(
+                            tab.icon,
+                            contentDescription = tab.label,
+                            tint = if (selected) Color.White else AppColors.NavPillIcon,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
 
 /** Main app shell: bottom navigation + nested NavHost. */
 @Composable
@@ -59,22 +118,16 @@ fun MainScaffold(navController: NavHostController = rememberNavController()) {
     Scaffold(
         bottomBar = {
             if (onBottomTab) {
-                NavigationBar {
-                    bottomTabs.forEach { tab ->
-                        NavigationBarItem(
-                            selected = currentDestination?.hasRoute(tab.route::class) == true,
-                            onClick = {
-                                navController.navigate(tab.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            },
-                            icon = tab.icon,
-                            label = { Text(tab.label) },
-                        )
-                    }
-                }
+                FloatingNavBar(
+                    selectedRoute = { tab -> currentDestination?.hasRoute(tab.route::class) == true },
+                    onSelect = { tab ->
+                        navController.navigate(tab.route) {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                )
             }
         },
     ) { padding ->

@@ -1,5 +1,15 @@
 package com.yeyint.recipeapp.feature.pantry
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -67,6 +77,7 @@ fun PantryScreen(
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var restockTarget by remember { mutableStateOf<PantryItem?>(null) }
+    var category by rememberSaveable { mutableStateOf<String?>(null) }
 
     val lifecycleOwner = LocalLifecycleOwner.current
     LaunchedEffect(lifecycleOwner) {
@@ -88,18 +99,39 @@ fun PantryScreen(
         // padding (very visible on iOS, where the safe area is ~59pt).
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        floatingActionButton = {
-            FloatingActionButton(onClick = onBrowseIngredients) {
-                Icon(Icons.Filled.Add, contentDescription = "Add ingredient to pantry")
-            }
-        },
     ) { padding ->
+        val categories = uiState.items.map { it.ingredient.category }.distinct().sorted()
+        val activeCategory = category?.takeIf { it in categories }
+        val visibleItems = uiState.items.filter {
+            activeCategory == null || it.ingredient.category == activeCategory
+        }
+
         Column(Modifier.fillMaxSize().padding(padding)) {
-            Text(
-                "My pantry",
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text("Pantry", style = MaterialTheme.typography.headlineLarge)
+                    if (uiState.items.isNotEmpty()) {
+                        Text(
+                            "${uiState.items.count { !it.isOutOfStock }} ingredients on hand",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+                IconButton(
+                    onClick = onBrowseIngredients,
+                    modifier = Modifier.size(44.dp).background(MaterialTheme.colorScheme.primary, CircleShape),
+                ) {
+                    Icon(
+                        Icons.Filled.Add,
+                        contentDescription = "Add ingredient to pantry",
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                    )
+                }
+            }
             when {
                 uiState.isLoading -> LoadingView()
                 uiState.error != null -> ErrorView(uiState.error!!, onRetry = viewModel::refresh)
@@ -107,17 +139,34 @@ fun PantryScreen(
                     "Your pantry is empty",
                     "Add ingredients you have at home to get recipe recommendations.",
                 )
-                else -> LazyColumn(
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    items(uiState.items, key = { it.id }) { item ->
-                        PantryItemCard(
-                            item = item,
-                            onMarkEmpty = { viewModel.markOutOfStock(item.id) },
-                            onRestock = { restockTarget = item },
-                            onRemove = { viewModel.remove(item.id) },
-                        )
+                else -> {
+                    if (categories.size > 1) {
+                        LazyRow(
+                            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            item {
+                                PantryChip("All ${uiState.items.size}", activeCategory == null) { category = null }
+                            }
+                            items(categories) { name ->
+                                PantryChip(name, activeCategory == name) { category = name }
+                            }
+                        }
+                    }
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        items(visibleItems, key = { it.id }) { item ->
+                            PantryItemCard(
+                                item = item,
+                                onMarkEmpty = { viewModel.markOutOfStock(item.id) },
+                                onRestock = { restockTarget = item },
+                                onRemove = { viewModel.remove(item.id) },
+                            )
+                        }
                     }
                 }
             }
@@ -226,34 +275,65 @@ private fun PantryItemCard(
     onRestock: () -> Unit,
     onRemove: () -> Unit,
 ) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+    Surface(
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceVariant,
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(Modifier.weight(1f)) {
-                Text(item.ingredient.name, style = MaterialTheme.typography.titleMedium)
-                if (item.isOutOfStock) {
-                    Text("Out of stock", color = AppColors.Error, style = MaterialTheme.typography.labelMedium)
-                } else {
+        Column(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 16.dp, bottom = 4.dp)) {
+            Text(
+                item.ingredient.name,
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 2,
+            )
+            Spacer(Modifier.height(2.dp))
+            if (item.isOutOfStock) {
+                Surface(
+                    shape = MaterialTheme.shapes.extraSmall,
+                    color = AppColors.Error.copy(alpha = 0.12f),
+                    contentColor = AppColors.Error,
+                ) {
                     Text(
-                        "${item.quantity} ${item.unit}",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.bodyMedium,
+                        "Out of stock",
+                        style = MaterialTheme.typography.labelMedium,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                     )
                 }
-            }
-            if (item.isOutOfStock) {
-                TextButton(onClick = onRestock) { Text("Restock") }
             } else {
-                TextButton(onClick = onMarkEmpty) { Text("Mark empty") }
+                Text(
+                    "${item.quantity} ${item.unit}",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
             }
-            IconButton(onClick = onRemove) {
-                Icon(Icons.Filled.Delete, "Remove", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (item.isOutOfStock) {
+                    TextButton(onClick = onRestock) { Text("Restock") }
+                } else {
+                    TextButton(onClick = onMarkEmpty) { Text("Mark empty") }
+                }
+                Spacer(Modifier.weight(1f))
+                IconButton(onClick = onRemove) {
+                    Icon(Icons.Filled.Delete, "Remove", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PantryChip(label: String, selected: Boolean, onClick: () -> Unit) {
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        label = { Text(label, style = MaterialTheme.typography.labelLarge) },
+        shape = CircleShape,
+        border = null,
+        colors = FilterChipDefaults.filterChipColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            labelColor = MaterialTheme.colorScheme.onSurface,
+            selectedContainerColor = MaterialTheme.colorScheme.onSurface,
+            selectedLabelColor = MaterialTheme.colorScheme.surface,
+        ),
+    )
 }

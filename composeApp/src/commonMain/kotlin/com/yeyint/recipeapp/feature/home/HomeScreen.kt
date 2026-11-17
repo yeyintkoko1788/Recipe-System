@@ -1,8 +1,24 @@
 package com.yeyint.recipeapp.feature.home
 
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import com.yeyint.recipeapp.ui.components.RecipeListRow
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -54,6 +70,7 @@ fun HomeScreen(
     viewModel: HomeContract = koinViewModel<HomeViewModel>(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var tabIndex by rememberSaveable { mutableStateOf(0) }
 
     val lifecycleOwner = LocalLifecycleOwner.current
     LaunchedEffect(lifecycleOwner) {
@@ -67,11 +84,6 @@ fun HomeScreen(
         // to this screen; re-applying them here would double the top
         // padding (very visible on iOS, where the safe area is ~59pt).
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        floatingActionButton = {
-            FloatingActionButton(onClick = onCreateClick) {
-                Icon(Icons.Filled.Add, contentDescription = "Create recipe")
-            }
-        },
     ) { padding ->
         when (val state = uiState) {
             HomeUiState.Loading -> LoadingView(Modifier.padding(padding))
@@ -82,36 +94,84 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 item {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Column(Modifier.weight(1f)) {
-                            Text("Hello${if (state.userName.isBlank()) "" else ", ${state.userName}"} 🧑‍🍳",
-                                style = MaterialTheme.typography.headlineMedium)
-                            Text(
-                                "What are we cooking today?",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
+                    Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                Modifier.size(44.dp).clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.primaryContainer),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    state.userName.trim().take(1).uppercase().ifEmpty { "?" },
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                )
+                            }
+                            Spacer(Modifier.width(12.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    "Hello",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                Text(
+                                    state.userName.ifBlank { "Chef" },
+                                    style = MaterialTheme.typography.titleMedium,
+                                )
+                            }
+                            IconButton(
+                                onClick = onCreateClick,
+                                modifier = Modifier.size(44.dp).background(
+                                    MaterialTheme.colorScheme.surfaceVariant, CircleShape,
+                                ),
+                            ) {
+                                Icon(Icons.Filled.Add, contentDescription = "Create recipe")
+                            }
                         }
-                        IconButton(onClick = onSearchClick) {
-                            Icon(Icons.Filled.Search, contentDescription = "Search recipes")
+                        Text("Find your next meal", style = MaterialTheme.typography.headlineLarge)
+                        Surface(
+                            onClick = onSearchClick,
+                            modifier = Modifier.fillMaxWidth().height(52.dp),
+                            shape = MaterialTheme.shapes.medium,
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                        ) {
+                            Row(
+                                Modifier.padding(horizontal = 16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Icon(
+                                    Icons.Filled.Search, contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                Spacer(Modifier.width(10.dp))
+                                Text(
+                                    "Search recipes",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
                         }
                     }
                 }
 
-                if (state.recommended.isNotEmpty()) {
-                    item { SectionHeader("Recommended for you") }
-                    item { HorizontalRecipeRow(state.recommended, onRecipeClick) }
+                item {
+                    HomeTabs(selected = tabIndex, onSelect = { tabIndex = it })
                 }
-                if (state.popular.isNotEmpty()) {
-                    item { SectionHeader("Popular") }
-                    item { HorizontalRecipeRow(state.popular, onRecipeClick) }
-                }
-                item { SectionHeader("New recipes") }
-                if (state.newest.isEmpty()) {
+
+                val recipes = state.recipesFor(HomeTab.entries[tabIndex])
+                if (recipes.isEmpty()) {
                     item { EmptyView("No recipes yet", "Be the first to share one!") }
                 } else {
-                    items(state.newest, key = { it.id }) { recipe ->
-                        RecipeCard(recipe, onClick = { onRecipeClick(recipe.id) })
+                    val featured = recipes.first()
+                    item(key = "featured-${featured.id}") {
+                        RecipeCard(featured, onClick = { onRecipeClick(featured.id) })
+                    }
+                    val rest = recipes.drop(1)
+                    if (rest.isNotEmpty()) {
+                        item { SectionHeader("More to cook") }
+                        items(rest, key = { it.id }) { recipe ->
+                            RecipeListRow(recipe, onClick = { onRecipeClick(recipe.id) })
+                        }
                     }
                 }
             }
@@ -119,16 +179,63 @@ fun HomeScreen(
     }
 }
 
+private enum class HomeTab(val label: String) {
+    ForYou("For you"),
+    Popular("Popular"),
+    Quick("Quick"),
+    New("New"),
+}
+
+private const val QUICK_MAX_MINUTES = 30
+
+private fun HomeUiState.Data.recipesFor(tab: HomeTab): List<RecipeSummary> = when (tab) {
+    HomeTab.ForYou -> recommended.ifEmpty { newest }
+    HomeTab.Popular -> popular.ifEmpty { newest }
+    HomeTab.Quick -> (recommended + popular + newest)
+        .distinctBy { it.id }
+        .filter { it.cookingTimeMinutes <= QUICK_MAX_MINUTES }
+        .sortedBy { it.cookingTimeMinutes }
+    HomeTab.New -> newest
+}
+
 @Composable
-private fun HorizontalRecipeRow(recipes: List<RecipeSummary>, onRecipeClick: (String) -> Unit) {
-    LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        items(recipes, key = { it.id }) { recipe ->
-            RecipeCard(
-                recipe,
-                onClick = { onRecipeClick(recipe.id) },
-                modifier = Modifier.width(280.dp),
-            )
+private fun HomeTabs(selected: Int, onSelect: (Int) -> Unit) {
+    Column {
+        Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+            HomeTab.entries.forEachIndexed { index, tab ->
+                val isSelected = index == selected
+                Column(
+                    modifier = Modifier
+                        .width(IntrinsicSize.Max)
+                        .heightIn(min = 44.dp)
+                        .selectable(
+                            selected = isSelected,
+                            role = Role.Tab,
+                            onClick = { onSelect(index) },
+                        ),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        tab.label,
+                        style = if (isSelected) MaterialTheme.typography.labelLarge
+                        else MaterialTheme.typography.bodyLarge,
+                        color = if (isSelected) MaterialTheme.colorScheme.onSurface
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 10.dp, bottom = 8.dp),
+                    )
+                    Box(
+                        Modifier
+                            .height(2.dp)
+                            .fillMaxWidth()
+                            .background(
+                                if (isSelected) MaterialTheme.colorScheme.onSurface
+                                else Color.Transparent,
+                            ),
+                    )
+                }
+            }
         }
+        HorizontalDivider(color = MaterialTheme.colorScheme.outline)
     }
 }
 
