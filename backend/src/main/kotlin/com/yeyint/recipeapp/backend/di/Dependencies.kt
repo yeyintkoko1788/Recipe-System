@@ -2,7 +2,9 @@ package com.yeyint.recipeapp.backend.di
 
 import com.yeyint.recipeapp.backend.config.AppConfig
 import com.yeyint.recipeapp.backend.repository.exposed.ExposedIngredientRepository
+import com.yeyint.recipeapp.backend.mail.LogMailer
 import com.yeyint.recipeapp.backend.repository.exposed.ExposedPantryRepository
+import com.yeyint.recipeapp.backend.repository.exposed.ExposedPasswordResetRepository
 import com.yeyint.recipeapp.backend.repository.exposed.ExposedRecipeRepository
 import com.yeyint.recipeapp.backend.repository.exposed.ExposedRefreshTokenRepository
 import com.yeyint.recipeapp.backend.repository.exposed.ExposedShoppingRepository
@@ -33,6 +35,7 @@ class Dependencies(config: AppConfig) {
     // Repositories (Exposed-backed)
     val userRepository = ExposedUserRepository()
     val refreshTokenRepository = ExposedRefreshTokenRepository()
+    val passwordResetRepository = ExposedPasswordResetRepository()
     val ingredientRepository = ExposedIngredientRepository()
     val recipeRepository = ExposedRecipeRepository()
     val pantryRepository = ExposedPantryRepository()
@@ -40,7 +43,7 @@ class Dependencies(config: AppConfig) {
     val statsRepository = ExposedStatsRepository()
 
     // Services
-    val authService = AuthService(userRepository, refreshTokenRepository, passwordHasher, jwtService)
+    val authService = AuthService(userRepository, refreshTokenRepository, passwordHasher, jwtService, passwordResetRepository, LogMailer())
     val ingredientService = IngredientService(ingredientRepository)
     val recipeService = RecipeService(recipeRepository, ingredientRepository)
     val pantryService = PantryService(pantryRepository, ingredientRepository)

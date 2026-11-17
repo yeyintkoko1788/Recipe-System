@@ -9,7 +9,9 @@ import com.yeyint.recipeapp.backend.domain.ShoppingSource
 import com.yeyint.recipeapp.backend.domain.User
 import com.yeyint.recipeapp.backend.domain.UserRole
 import com.yeyint.recipeapp.backend.repository.IngredientRepository
+import com.yeyint.recipeapp.backend.mail.Mailer
 import com.yeyint.recipeapp.backend.repository.PantryRepository
+import com.yeyint.recipeapp.backend.repository.PasswordResetRepository
 import com.yeyint.recipeapp.backend.repository.RefreshTokenRepository
 import com.yeyint.recipeapp.backend.repository.ShoppingRepository
 import com.yeyint.recipeapp.backend.repository.UserRepository
@@ -50,6 +52,35 @@ class FakeUserRepository : UserRepository {
     }
 
     override suspend fun delete(id: UUID) = storage.remove(id) != null
+
+    override suspend fun updatePassword(id: UUID, passwordHash: String): Boolean {
+        val user = storage[id] ?: return false
+        storage[id] = user.copy(passwordHash = passwordHash)
+        return true
+    }
+}
+
+class FakePasswordResetRepository : PasswordResetRepository {
+    private data class Entry(val userId: UUID, val expiresAt: Instant, var used: Boolean)
+    private val tokens = mutableMapOf<String, Entry>()
+
+    override suspend fun store(userId: UUID, tokenHash: String, expiresAt: Instant) {
+        tokens.values.filter { it.userId == userId }.forEach { it.used = true }
+        tokens[tokenHash] = Entry(userId, expiresAt, used = false)
+    }
+
+    override suspend fun consume(tokenHash: String, now: Instant): UUID? {
+        val entry = tokens[tokenHash]?.takeIf { !it.used && it.expiresAt.isAfter(now) } ?: return null
+        entry.used = true
+        return entry.userId
+    }
+}
+
+class FakeMailer : Mailer {
+    val codes = mutableListOf<Pair<String, String>>() // email -> code
+    override suspend fun sendPasswordResetCode(toEmail: String, name: String, code: String, ttlMinutes: Long) {
+        codes += toEmail to code
+    }
 }
 
 class FakeRefreshTokenRepository : RefreshTokenRepository {

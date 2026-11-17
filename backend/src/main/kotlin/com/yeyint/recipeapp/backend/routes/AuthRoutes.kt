@@ -1,7 +1,9 @@
 package com.yeyint.recipeapp.backend.routes
 
 import com.yeyint.recipeapp.backend.dto.ApiResponse
+import com.yeyint.recipeapp.backend.dto.ForgotPasswordRequest
 import com.yeyint.recipeapp.backend.dto.LoginRequest
+import com.yeyint.recipeapp.backend.dto.ResetPasswordRequest
 import com.yeyint.recipeapp.backend.dto.MessageResponse
 import com.yeyint.recipeapp.backend.dto.RefreshTokenRequest
 import com.yeyint.recipeapp.backend.dto.RegisterRequest
@@ -30,6 +32,14 @@ fun Route.authRoutes(auth: AuthService) {
             }
             post("/login") {
                 call.respond(ApiResponse.ok(auth.login(call.receive<LoginRequest>())))
+            }
+            post("/forgot-password") {
+                auth.forgotPassword(call.receive<ForgotPasswordRequest>().email)
+                call.respond(ApiResponse.ok(MessageResponse("If that email is registered, a reset code has been sent")))
+            }
+            post("/reset-password") {
+                auth.resetPassword(call.receive<ResetPasswordRequest>())
+                call.respond(ApiResponse.ok(MessageResponse("Password updated")))
             }
             post("/refresh") {
                 val request = call.receive<RefreshTokenRequest>()

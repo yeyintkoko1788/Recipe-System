@@ -43,6 +43,12 @@ data class AuthResponseDto(
 data class RegisterRequestDto(val name: String, val email: String, val password: String)
 
 @Serializable
+data class ForgotPasswordRequestDto(val email: String)
+
+@Serializable
+data class ResetPasswordRequestDto(val email: String, val code: String, val newPassword: String)
+
+@Serializable
 data class LoginRequestDto(val email: String, val password: String)
 
 @Serializable

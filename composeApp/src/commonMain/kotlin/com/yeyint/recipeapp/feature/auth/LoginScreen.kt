@@ -41,6 +41,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun LoginScreen(
     onRegisterClick: () -> Unit,
+    onForgotPasswordClick: () -> Unit = {},
     viewModel: LoginContract = koinViewModel<LoginViewModel>(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -85,7 +86,10 @@ fun LoginScreen(
             )
         }
 
-        Spacer(Modifier.height(24.dp))
+        TextButton(onClick = onForgotPasswordClick, modifier = Modifier.align(Alignment.End)) {
+            Text("Forgot password?")
+        }
+        Spacer(Modifier.height(12.dp))
         AppButton(
             text = "Log in",
             loading = uiState is LoginUiState.Loading,

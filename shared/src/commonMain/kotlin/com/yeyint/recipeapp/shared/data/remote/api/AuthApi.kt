@@ -1,7 +1,9 @@
 package com.yeyint.recipeapp.shared.data.remote.api
 
 import com.yeyint.recipeapp.shared.data.remote.dto.AuthResponseDto
+import com.yeyint.recipeapp.shared.data.remote.dto.ForgotPasswordRequestDto
 import com.yeyint.recipeapp.shared.data.remote.dto.LoginRequestDto
+import com.yeyint.recipeapp.shared.data.remote.dto.ResetPasswordRequestDto
 import com.yeyint.recipeapp.shared.data.remote.dto.MessageDto
 import com.yeyint.recipeapp.shared.data.remote.dto.RefreshTokenRequestDto
 import com.yeyint.recipeapp.shared.data.remote.dto.RegisterRequestDto
@@ -20,6 +22,12 @@ class AuthApi(private val client: HttpClient) {
 
     suspend fun login(request: LoginRequestDto): AppResult<AuthResponseDto> =
         safeApiCall { client.post("api/v1/auth/login") { setBody(request) } }
+
+    suspend fun forgotPassword(email: String): AppResult<MessageDto> =
+        safeApiCall { client.post("api/v1/auth/forgot-password") { setBody(ForgotPasswordRequestDto(email)) } }
+
+    suspend fun resetPassword(email: String, code: String, newPassword: String): AppResult<MessageDto> =
+        safeApiCall { client.post("api/v1/auth/reset-password") { setBody(ResetPasswordRequestDto(email, code, newPassword)) } }
 
     suspend fun logout(refreshToken: String): AppResult<MessageDto> =
         safeApiCall { client.post("api/v1/auth/logout") { setBody(RefreshTokenRequestDto(refreshToken)) } }

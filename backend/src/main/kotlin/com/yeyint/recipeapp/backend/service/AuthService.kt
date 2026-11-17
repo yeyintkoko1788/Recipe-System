@@ -7,6 +7,9 @@ import com.yeyint.recipeapp.backend.dto.AuthResponse
 import com.yeyint.recipeapp.backend.dto.LoginRequest
 import com.yeyint.recipeapp.backend.dto.RegisterRequest
 import com.yeyint.recipeapp.backend.dto.toResponse
+import com.yeyint.recipeapp.backend.dto.ResetPasswordRequest
+import com.yeyint.recipeapp.backend.mail.Mailer
+import com.yeyint.recipeapp.backend.repository.PasswordResetRepository
 import com.yeyint.recipeapp.backend.repository.RefreshTokenRepository
 import com.yeyint.recipeapp.backend.repository.UserRepository
 import com.yeyint.recipeapp.backend.security.JwtService
@@ -14,6 +17,8 @@ import com.yeyint.recipeapp.backend.security.PasswordHasher
 import com.yeyint.recipeapp.backend.util.AppException
 import com.yeyint.recipeapp.backend.util.validate
 import org.slf4j.LoggerFactory
+import java.security.SecureRandom
+import java.time.Duration
 import java.time.Instant
 import java.util.UUID
 
@@ -29,8 +34,11 @@ class AuthService(
     private val refreshTokens: RefreshTokenRepository,
     private val hasher: PasswordHasher,
     private val jwt: JwtService,
+    private val passwordResets: PasswordResetRepository,
+    private val mailer: Mailer,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
+    private val random = SecureRandom()
 
     suspend fun register(request: RegisterRequest): AuthResponse {
         val name = request.name.trim()
@@ -69,6 +77,33 @@ class AuthService(
         return issueTokens(user)
     }
 
+    /**
+     * Emails a 6-digit one-time code. Always succeeds from the caller's view so
+     * the endpoint never reveals whether an email is registered.
+     */
+    suspend fun forgotPassword(email: String) {
+        val user = users.findByEmail(email.trim().lowercase()) ?: return
+        val code = "%06d".format(random.nextInt(1_000_000))
+        passwordResets.store(user.id, jwt.hash(code + user.id), Instant.now().plus(RESET_CODE_TTL))
+        mailer.sendPasswordResetCode(user.email, user.name, code, RESET_CODE_TTL.toMinutes())
+    }
+
+    suspend fun resetPassword(request: ResetPasswordRequest) {
+        validate {
+            require(
+                request.newPassword.length >= 8 &&
+                    request.newPassword.any { it.isDigit() } && request.newPassword.any { it.isLetter() },
+                "newPassword", "Password must be at least 8 characters with letters and digits",
+            )
+        }
+        val invalid = AppException.Validation("Invalid or expired code", mapOf("code" to "Invalid or expired code"))
+        val user = users.findByEmail(request.email.trim().lowercase()) ?: throw invalid
+        val owner = passwordResets.consume(jwt.hash(request.code.trim() + user.id), Instant.now())
+        if (owner != user.id) throw invalid
+        users.updatePassword(user.id, hasher.hash(request.newPassword))
+        refreshTokens.revokeAllForUser(user.id) // sign out every existing session
+    }
+
     suspend fun logout(rawToken: String) {
         refreshTokens.revoke(jwt.hash(rawToken))
     }
@@ -96,6 +131,7 @@ class AuthService(
     }
 
     companion object {
+        private val RESET_CODE_TTL: Duration = Duration.ofMinutes(15)
         private val EMAIL_REGEX = Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
     }
 }

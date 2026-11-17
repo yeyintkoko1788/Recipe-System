@@ -32,6 +32,8 @@ private class FakeAuthRepository : AuthRepository {
     override suspend fun restoreSession() = Unit
     override suspend fun login(email: String, password: String): AppResult<User> = nextResult
     override suspend fun register(name: String, email: String, password: String): AppResult<User> = nextResult
+    override suspend fun forgotPassword(email: String): AppResult<Unit> = AppResult.Success(Unit)
+    override suspend fun resetPassword(email: String, code: String, newPassword: String): AppResult<Unit> = AppResult.Success(Unit)
     override suspend fun logout(): AppResult<Unit> = AppResult.Success(Unit)
     override fun onSessionExpired() = Unit
 }

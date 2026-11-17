@@ -28,6 +28,14 @@ interface UserRepository {
     suspend fun list(page: PageRequest, search: String?): Page<User>
     suspend fun updateRole(id: UUID, role: UserRole): Boolean
     suspend fun delete(id: UUID): Boolean
+    suspend fun updatePassword(id: UUID, passwordHash: String): Boolean
+}
+
+interface PasswordResetRepository {
+    /** Invalidates earlier unused codes for the user, then stores the new one. */
+    suspend fun store(userId: UUID, tokenHash: String, expiresAt: Instant)
+    /** Atomically marks the code used; returns the owner when it was valid, unused and unexpired. */
+    suspend fun consume(tokenHash: String, now: Instant): UUID?
 }
 
 interface RefreshTokenRepository {

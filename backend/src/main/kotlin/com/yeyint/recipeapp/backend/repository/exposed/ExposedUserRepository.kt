@@ -79,6 +79,13 @@ class ExposedUserRepository : UserRepository {
         UsersTable.deleteWhere { UsersTable.id eq id } > 0
     }
 
+    override suspend fun updatePassword(id: UUID, passwordHash: String): Boolean = dbQuery {
+        UsersTable.update({ UsersTable.id eq id }) {
+            it[UsersTable.passwordHash] = passwordHash
+            it[updatedAt] = OffsetDateTime.now(ZoneOffset.UTC)
+        } > 0
+    }
+
     private fun ResultRow.toUser() = User(
         id = this[UsersTable.id].value,
         name = this[UsersTable.name],

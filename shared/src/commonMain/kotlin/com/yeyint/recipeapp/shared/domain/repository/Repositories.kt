@@ -27,6 +27,9 @@ interface AuthRepository {
     suspend fun login(email: String, password: String): AppResult<User>
     suspend fun register(name: String, email: String, password: String): AppResult<User>
     suspend fun logout(): AppResult<Unit>
+    /** Emails a one-time reset code (the server answers the same for unknown emails). */
+    suspend fun forgotPassword(email: String): AppResult<Unit>
+    suspend fun resetPassword(email: String, code: String, newPassword: String): AppResult<Unit>
     /** Called by the network layer when the refresh token is rejected. */
     fun onSessionExpired()
 }

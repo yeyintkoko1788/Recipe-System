@@ -1,5 +1,6 @@
 package com.yeyint.recipeapp.di
 
+import com.yeyint.recipeapp.feature.auth.ForgotPasswordViewModel
 import com.yeyint.recipeapp.feature.auth.LoginViewModel
 import com.yeyint.recipeapp.feature.auth.RegisterViewModel
 import com.yeyint.recipeapp.feature.explore.ExploreViewModel
@@ -19,6 +20,7 @@ import org.koin.dsl.module
 val appModule = module {
     viewModel { LoginViewModel(get()) }
     viewModel { RegisterViewModel(get()) }
+    viewModel { ForgotPasswordViewModel(get()) }
     viewModel { HomeViewModel(get(), get()) }
     viewModel { ExploreViewModel(get()) }
     viewModel { SearchViewModel(get()) }

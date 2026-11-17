@@ -87,3 +87,11 @@ object ShoppingItemsTable : UUIDTable("shopping_items") {
     val createdAt = timestampWithTimeZone("created_at")
     val purchasedAt = timestampWithTimeZone("purchased_at").nullable()
 }
+
+object PasswordResetTokensTable : UUIDTable("password_reset_tokens") {
+    val userId = reference("user_id", UsersTable)
+    val tokenHash = char("token_hash", 64).uniqueIndex()
+    val expiresAt = timestampWithTimeZone("expires_at")
+    val used = bool("used").default(false)
+    val createdAt = timestampWithTimeZone("created_at")
+}

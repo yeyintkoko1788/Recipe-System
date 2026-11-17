@@ -45,6 +45,12 @@ class AuthRepositoryImpl(
             .onSuccess(::persistSession)
             .map { it.user.toDomain() }
 
+    override suspend fun forgotPassword(email: String): AppResult<Unit> =
+        api.forgotPassword(email.trim()).map { }
+
+    override suspend fun resetPassword(email: String, code: String, newPassword: String): AppResult<Unit> =
+        api.resetPassword(email.trim(), code.trim(), newPassword).map { }
+
     override suspend fun logout(): AppResult<Unit> {
         // Best effort server-side revocation; local logout always succeeds.
         tokenStorage.refreshToken?.let { api.logout(it) }

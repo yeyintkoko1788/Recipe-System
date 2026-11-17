@@ -8,6 +8,7 @@ sealed interface Route {
     // Auth graph
     @Serializable data object Login : Route
     @Serializable data object Register : Route
+    @Serializable data object ForgotPassword : Route
 
     // Main graph — bottom bar tabs
     @Serializable data object Home : Route
